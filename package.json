@@ -1,0 +1,21 @@
+{
+  "name": "mirage-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bwip-js": "^4.5.1",
+    "dotenv": "^16.4.5",
+    "grammy": "^1.30.0",
+    "nodemon": "^3.1.7",
+    "pg": "^8.13.0",
+    "qrcode": "^1.5.4",
+    "xml2js": "^0.6.2"
+  }
+}
