@@ -1,12 +1,12 @@
-import { importXMLData } from './importXmlToPostgres';
+import { updateXMLData } from './importXmlToPostgres';
 import { query, getUsers } from './reqFromPostgres';
 // import { importXMLData } from '.importXMLData';
 
 const runImport = async () => {
-  await importXMLData();
+  await updateXMLData();
 };
 
-// runImport();
+runImport();
 
 const runReqUsers = async () => {
   try {

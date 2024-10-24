@@ -1,30 +1,88 @@
 import 'dotenv/config';
 import bwipjs from 'bwip-js';
+import { CronJob } from 'cron';
 
 import { Bot, GrammyError, HttpError, InputFile, Keyboard, Context } from 'grammy';
 import { Message } from 'grammy/types';
-// require('dotenv').config();
-// const bwipjs = require('bwip-js');
+import { query, getUsers, updateUserTgId } from './reqFromPostgres';
+import { updateXMLData } from './importXmlToPostgres';
 
-// const { Bot, GrammyError, HttpError, InputFile } = require('grammy');
-// const { ReqTodb } = require('./reqtodb');
+const getUserByPhone = async (phoneNumber: string) => {
+  try {
+    const users = await query('SELECT * FROM users WHERE phone_number = $1', [phoneNumber]);
+    // console.log(users);
 
-// const fs = require('fs');
-// const xml2js = require('xml2js');
+    if (users.rows.length > 0) {
+      console.log('Найденные пользователи:', users.rows);
+    } else {
+      console.log(`Пользователь с номером телефона ${phoneNumber} не найден`);
+    }
+  } catch (error) {
+    console.error('Ошибка при получении пользователя:', error);
+  }
+};
 
-// const parser = new xml2js.Parser();
-// const xml = fs.readFileSync('./db/ВыгрузкаXML.XML', 'utf8');
+const getUserByTgId = async (tgId: number) => {
+  try {
+    const users = await query('SELECT * FROM users WHERE tg_id = $1', [tgId]);
+    // console.log(users);
 
-// parser.parseString(xml, (err, result) => {
-//   if (err) {
-//     console.error(err);
-//   } else {
-//     const jsonData = result;
-//     console.log(jsonData);
-//   }
-// });
+    if (users.rows.length > 0) {
+      // console.log('Найденные пользователи:', users.rows);
+      return users.rows;
+    } else {
+      console.log(`Пользователь с таким Id ${tgId} не найден`);
+    }
+  } catch (error) {
+    console.error('Ошибка при получении пользователя:', error);
+  }
+};
 
-// const bot = new Bot(process.env.BOT_API_KEY);
+function formatPhoneNumber(phoneNumber: string): string {
+  if (phoneNumber.length !== 11 && phoneNumber.length !== 12) {
+    return phoneNumber;
+  }
+
+  if (phoneNumber.length === 12) {
+    return `7 (${phoneNumber.slice(2, 5)}) ${phoneNumber.slice(5, 8)} ${phoneNumber.slice(
+      8,
+      10
+    )} ${phoneNumber.slice(10)}\r\n\t\t\t`;
+  }
+
+  return `7 (${phoneNumber.slice(1, 4)}) ${phoneNumber.slice(4, 7)} ${phoneNumber.slice(
+    7,
+    9
+  )} ${phoneNumber.slice(9)}\r\n\t\t\t`;
+}
+
+async function generateBarcode(
+  text: string,
+  barcodeType: string = 'code128'
+): Promise<Buffer | null> {
+  try {
+    const result = await bwipjs.toBuffer({
+      bcid: barcodeType,
+      text,
+      scale: 3,
+      height: 15,
+      includetext: true,
+      textxalign: 'center',
+      padding: 10,
+    });
+
+    if (result && result.buffer) {
+      return Buffer.from(result.buffer);
+    } else {
+      return null;
+    }
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+}
+
+// getUserName('Тарасенко Николай\r\n\t\t\t');
 const bot = new Bot(process.env.BOT_API_KEY as string);
 
 bot.api.setMyCommands([
@@ -47,15 +105,9 @@ bot.api.setMyCommands([
 ]);
 
 bot.command('start', async (ctx) => {
-  await ctx.reply('Привет! Это бот ООО Мираж!');
-});
-
-bot.command('time', async (ctx) => {
-  await ctx.reply('Вы отработали Х часов');
-});
-
-bot.command(['money', 'mymoney'], async (ctx) => {
-  await ctx.reply('за последний месяц вам будет начисленно Х рублей!');
+  await ctx.reply(
+    'Привет! Это бот ООО Мираж! для полноценной работы вы должны поделиться своим номером телефона, для этого нужно выполнить команду /getphone'
+  );
 });
 
 const keyboard = new Keyboard().requestContact('Отправить контакт').resized();
@@ -69,7 +121,33 @@ bot.command('getphone', async (ctx) => {
 bot.on('message:contact', async (ctx) => {
   const phoneNumber = ctx.message.contact.phone_number;
   console.log(ctx.msg);
+  console.log(ctx.from?.id);
+
+  const formatPhone = formatPhoneNumber(phoneNumber);
+
+  await getUserByPhone(formatPhone);
+  await updateUserTgId(formatPhone, ctx.from.id);
   await ctx.reply(`Ваш номер телефона: ${phoneNumber}`);
+});
+
+bot.command('time', async (ctx) => {
+  // console.log(ctx);
+  if (ctx.update.message) {
+    const tgId = ctx.update.message.from.id;
+    const userInfo = await getUserByTgId(tgId);
+    if (!userInfo) {
+      await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+    }
+
+    await ctx.reply(`Вы отработали ${userInfo[0].hours_worked} часов`);
+  } else {
+    // await ctx.reply('Эта команда доступна только в личных чатах.');
+    await ctx.reply('В данный момент эта команда недоступна.');
+  }
+});
+
+bot.command(['money', 'mymoney'], async (ctx) => {
+  await ctx.reply('за последний месяц вам будет начисленно Х рублей!');
 });
 
 bot.on('message:voice', async (ctx) => {
@@ -114,46 +192,59 @@ bot.hears('ID', async (ctx) => {
 
 // bot.hears('barcode', async (ctx) => {
 bot.command('barcode', async (ctx) => {
-  const generateBarcode = async (
-    text: string,
-    barcodeType: string = 'code128'
-  ): Promise<Buffer | null> => {
-    try {
-      const result = await bwipjs.toBuffer({
-        bcid: barcodeType,
-        text,
-        scale: 3,
-        height: 15,
-        includetext: true,
-        textxalign: 'center',
-        padding: 10,
-      });
+  // const generateBarcode = async (
+  //   text: string,
+  //   barcodeType: string = 'code128'
+  // ): Promise<Buffer | null> => {
+  //   try {
+  //     const result = await bwipjs.toBuffer({
+  //       bcid: barcodeType,
+  //       text,
+  //       scale: 3,
+  //       height: 15,
+  //       includetext: true,
+  //       textxalign: 'center',
+  //       padding: 10,
+  //     });
 
-      if (result && result.buffer) {
-        return Buffer.from(result.buffer);
-      } else {
-        return null;
-      }
-    } catch (err) {
-      console.error(err);
-      return null;
+  //     if (result && result.buffer) {
+  //       return Buffer.from(result.buffer);
+  //     } else {
+  //       return null;
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //     return null;
+  //   }
+  // };
+
+  if (ctx.update.message) {
+    const tgId = ctx.update.message.from.id;
+    const userInfo = await getUserByTgId(tgId);
+    if (!userInfo) {
+      await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
     }
-  };
 
-  const barcodeBuffer = await generateBarcode('1000003105372');
+    // await ctx.reply(`Вы отработали ${userInfo[0].barcode} часов`);
+    // const barcodeBuffer = await generateBarcode('1000003105372');
+    const barcodeBuffer = await generateBarcode(userInfo[0].barcode);
 
-  if (barcodeBuffer) {
-    try {
-      // console.log(barcodeBuffer);
-      const inputFile = new InputFile(barcodeBuffer, 'barcode.png');
-      await ctx.replyWithPhoto(inputFile);
-      console.log('Штрихкод отправлен успешно');
-    } catch (err) {
-      // console.error('Ошибка при отправке штрихкода:', err);
-      await ctx.reply('Ошибка при отправке штрихкода');
+    if (barcodeBuffer) {
+      try {
+        // console.log(barcodeBuffer);
+        const inputFile = new InputFile(barcodeBuffer, 'barcode.png');
+        await ctx.replyWithPhoto(inputFile);
+        console.log('Штрихкод отправлен успешно');
+      } catch (err) {
+        // console.error('Ошибка при отправке штрихкода:', err);
+        await ctx.reply('Ошибка при отправке штрихкода');
+      }
+    } else {
+      await ctx.reply('Ошибка при генерации штрихкода');
     }
   } else {
-    await ctx.reply('Ошибка при генерации штрихкода');
+    // await ctx.reply('Эта команда доступна только в личных чатах.');
+    await ctx.reply('В данный момент эта команда недоступна.');
   }
 });
 
@@ -187,3 +278,15 @@ bot.catch((error) => {
 });
 
 bot.start();
+
+const job = new CronJob(
+  '0 3 * * *', // cronTime
+  function () {
+    const filePath = './db/ВыгрузкаXML.XML';
+    updateXMLData(filePath);
+    console.log('data is updated');
+  }, // onTick
+  null, // onComplete
+  true, // start
+  'Asia/Krasnoyarsk' // timeZone
+);

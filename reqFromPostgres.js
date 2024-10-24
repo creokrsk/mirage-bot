@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUsers = exports.query = void 0;
+exports.updateUserTgId = exports.getUsers = exports.query = void 0;
 var pg_1 = require("pg");
 var pool = new pg_1.Pool({
     user: 'creo',
@@ -58,7 +58,7 @@ var query = function (text, params) { return __awaiter(void 0, void 0, void 0, f
                 return [4 /*yield*/, client.query(text, params)];
             case 3:
                 result = _a.sent();
-                return [2 /*return*/, result.rows];
+                return [2 /*return*/, result];
             case 4:
                 error_1 = _a.sent();
                 console.error('Ошибка выполнения запроса:', error_1);
@@ -83,6 +83,34 @@ var getUsers = function () { return __awaiter(void 0, void 0, void 0, function (
     });
 }); };
 exports.getUsers = getUsers;
+var updateUserTgId = function (phoneNumber, tgId) { return __awaiter(void 0, void 0, void 0, function () {
+    var result, error_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, (0, exports.query)('UPDATE users SET tg_id = $1 WHERE phone_number = $2', [
+                        tgId,
+                        phoneNumber,
+                    ])];
+            case 1:
+                result = _a.sent();
+                if (result.rowCount === 1) {
+                    console.log("tg_id \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D \u0434\u043B\u044F \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F \u0441 phoneNumber: ".concat(phoneNumber));
+                }
+                else {
+                    console.log("\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u0441 phoneNumber: ".concat(phoneNumber, " \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D"));
+                }
+                return [3 /*break*/, 3];
+            case 2:
+                error_2 = _a.sent();
+                console.error('Ошибка обновления tg_id:', error_2);
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.updateUserTgId = updateUserTgId;
 // export const getUser = async (data) => {
 //   const users = await query('SELECT * FROM users WHERE name='data'');
 //   return users;

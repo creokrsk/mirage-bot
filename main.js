@@ -49,7 +49,7 @@ var runImport = function () { return __awaiter(void 0, void 0, void 0, function 
         }
     });
 }); };
-// runImport();
+runImport();
 var runReqUsers = function () { return __awaiter(void 0, void 0, void 0, function () {
     var users, error_1;
     return __generator(this, function (_a) {

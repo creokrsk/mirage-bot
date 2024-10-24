@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.importXMLData = void 0;
+exports.updateXMLData = void 0;
 var fs = require("fs");
 var xml2js_1 = require("xml2js");
 var pg_1 = require("pg");
@@ -55,9 +55,39 @@ var parseXMLFile = function (filePath) {
         });
     });
 };
-// Функция для вставки данных в PostgreSQL
-var insertDataToPostgres = function (data) { return __awaiter(void 0, void 0, void 0, function () {
-    var client, users, _a, _b, _c, _i, userKey, user, name_1, phoneNumber, barcode, hoursWorked, err_1;
+// const insertDataToPostgres = async (data: any) => {
+//   const client = new Client({
+//     user: 'creo',
+//     host: 'localhost',
+//     database: 'mirage',
+//     password: '',
+//     port: 5432,
+//   });
+//   await client.connect();
+//   try {
+//     const users = data['Выгрузка'];
+//     for (const userKey in users) {
+//       if (users.hasOwnProperty(userKey)) {
+//         const user = users[userKey][0];
+//         const name = user.ФИО?.[0]?.ФИО?.[0] || null;
+//         const phoneNumber = user.НомерТелефона?.[0]?.НомерТелефона?.[0] || null;
+//         const barcode = user.ШтрихКод?.[0]?.ШтрихКод?.[0] || null;
+//         const hoursWorked = user.ОтработанныеЧасы?.[0]?.ОтработанныеЧасы?.[0] || null;
+//         await client.query(
+//           'INSERT INTO users (user_n, name, phone_number, barcode, hours_worked) VALUES ($1, $2, $3, $4, $5)',
+//           [userKey, name, phoneNumber, barcode, hoursWorked]
+//         );
+//       }
+//     }
+//     console.log('Data successfully inserted into PostgreSQL');
+//   } catch (err) {
+//     console.error('Error:', err);
+//   } finally {
+//     await client.end();
+//   }
+// };
+var updateUserOrInsert = function (data) { return __awaiter(void 0, void 0, void 0, function () {
+    var client, users, _a, _b, _c, _i, userKey, user, name_1, phoneNumber, barcode, hoursWorked, existsResult, err_1;
     var _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
     return __generator(this, function (_r) {
         switch (_r.label) {
@@ -74,7 +104,7 @@ var insertDataToPostgres = function (data) { return __awaiter(void 0, void 0, vo
                 _r.sent();
                 _r.label = 2;
             case 2:
-                _r.trys.push([2, 7, 8, 10]);
+                _r.trys.push([2, 10, 11, 13]);
                 users = data['Выгрузка'];
                 _a = users;
                 _b = [];
@@ -83,41 +113,49 @@ var insertDataToPostgres = function (data) { return __awaiter(void 0, void 0, vo
                 _i = 0;
                 _r.label = 3;
             case 3:
-                if (!(_i < _b.length)) return [3 /*break*/, 6];
+                if (!(_i < _b.length)) return [3 /*break*/, 9];
                 _c = _b[_i];
-                if (!(_c in _a)) return [3 /*break*/, 5];
+                if (!(_c in _a)) return [3 /*break*/, 8];
                 userKey = _c;
-                if (!users.hasOwnProperty(userKey)) return [3 /*break*/, 5];
+                if (!users.hasOwnProperty(userKey)) return [3 /*break*/, 8];
                 user = users[userKey][0];
                 name_1 = ((_f = (_e = (_d = user.ФИО) === null || _d === void 0 ? void 0 : _d[0]) === null || _e === void 0 ? void 0 : _e.ФИО) === null || _f === void 0 ? void 0 : _f[0]) || null;
                 phoneNumber = ((_j = (_h = (_g = user.НомерТелефона) === null || _g === void 0 ? void 0 : _g[0]) === null || _h === void 0 ? void 0 : _h.НомерТелефона) === null || _j === void 0 ? void 0 : _j[0]) || null;
                 barcode = ((_m = (_l = (_k = user.ШтрихКод) === null || _k === void 0 ? void 0 : _k[0]) === null || _l === void 0 ? void 0 : _l.ШтрихКод) === null || _m === void 0 ? void 0 : _m[0]) || null;
                 hoursWorked = ((_q = (_p = (_o = user.ОтработанныеЧасы) === null || _o === void 0 ? void 0 : _o[0]) === null || _p === void 0 ? void 0 : _p.ОтработанныеЧасы) === null || _q === void 0 ? void 0 : _q[0]) || null;
-                return [4 /*yield*/, client.query('INSERT INTO users (user_n, name, phone_number, barcode, hours_worked) VALUES ($1, $2, $3, $4, $5)', [userKey, name_1, phoneNumber, barcode, hoursWorked])];
+                return [4 /*yield*/, client.query('SELECT 1 FROM users WHERE user_n = $1', [userKey])];
             case 4:
-                _r.sent();
-                _r.label = 5;
+                existsResult = _r.sent();
+                if (!(existsResult.rows.length > 0)) return [3 /*break*/, 6];
+                return [4 /*yield*/, client.query('UPDATE users SET name = $1, phone_number = $2, barcode = $3, hours_worked = $4 WHERE user_n = $5', [name_1, phoneNumber, barcode, hoursWorked, userKey])];
             case 5:
+                _r.sent();
+                console.log("\u0414\u0430\u043D\u043D\u044B\u0435 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F ".concat(userKey, " \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B"));
+                return [3 /*break*/, 8];
+            case 6: return [4 /*yield*/, client.query('INSERT INTO users (user_n, name, phone_number, barcode, hours_worked) VALUES ($1, $2, $3, $4, $5)', [userKey, name_1, phoneNumber, barcode, hoursWorked])];
+            case 7:
+                _r.sent();
+                console.log("\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C ".concat(userKey, " \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D"));
+                _r.label = 8;
+            case 8:
                 _i++;
                 return [3 /*break*/, 3];
-            case 6:
-                console.log('Data successfully inserted into PostgreSQL');
-                return [3 /*break*/, 10];
-            case 7:
+            case 9: return [3 /*break*/, 13];
+            case 10:
                 err_1 = _r.sent();
                 console.error('Error:', err_1);
-                return [3 /*break*/, 10];
-            case 8: return [4 /*yield*/, client.end()];
-            case 9:
+                return [3 /*break*/, 13];
+            case 11: return [4 /*yield*/, client.end()];
+            case 12:
                 _r.sent();
                 return [7 /*endfinally*/];
-            case 10: return [2 /*return*/];
+            case 13: return [2 /*return*/];
         }
     });
 }); };
-var importXMLData = function (filePath) {
+function updateXMLData(filePath) {
     if (filePath === void 0) { filePath = './db/ВыгрузкаXML.XML'; }
-    return __awaiter(void 0, void 0, void 0, function () {
+    return __awaiter(this, void 0, void 0, function () {
         var xmlData, err_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -126,81 +164,25 @@ var importXMLData = function (filePath) {
                     return [4 /*yield*/, parseXMLFile(filePath)];
                 case 1:
                     xmlData = _a.sent();
-                    return [4 /*yield*/, insertDataToPostgres(xmlData)];
+                    return [4 /*yield*/, updateUserOrInsert(xmlData)];
                 case 2:
                     _a.sent();
                     return [3 /*break*/, 4];
                 case 3:
                     err_2 = _a.sent();
-                    console.error('Error during XML data import:', err_2);
+                    console.error('Error during XML data update:', err_2);
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/];
             }
         });
     });
-};
-exports.importXMLData = importXMLData;
-// import * as fs from 'fs';
-// import { Parser } from 'xml2js';
-// import { Client } from 'pg';
-//   const client = new Client({
-//     user: 'creo',
-//     host: 'localhost',
-//     database: 'mirage',
-//     password: '',
-//     port: 5432,
-//   });
-//   client.connect();
-//   const parseXMLFile = (filePath: string) => {
-//     return new Promise((resolve, reject) => {
-//       fs.readFile(filePath, (err, data) => {
-//         if (err) {
-//           return reject(err);
-//         }
-//         xml2js.parseString(data, (err, result) => {
-//           if (err) {
-//             return reject(err);
-//           }
-//           // console.log(result);
-//           resolve(result);
-//         });
-//       });
-//     });
-//   };
-//   const insertDataToPostgres = async (data) => {
-//     const users = data['Выгрузка'];
-//     for (const userKey in users) {
-//       if (users.hasOwnProperty(userKey)) {
-//         const user = users[userKey][0];
-//         // console.log(user);
-//         // console.log(userKey);
-//         // console.log(users[userKey][0]);
-//         const name = user.ФИО?.[0]?.ФИО?.[0] || null;
-//         const phoneNumber = user.НомерТелефона?.[0]?.НомерТелефона?.[0] || null;
-//         const barcode = user.ШтрихКод?.[0]?.ШтрихКод?.[0] || null;
-//         const hoursWorked = user.ОтработанныеЧасы?.[0]?.ОтработанныеЧасы?.[0] || null;
-//         await client.query(
-//           'INSERT INTO users (user_n, name, phone_number, barcode, hours_worked) VALUES ($1, $2, $3, $4, $5)',
-//           [userKey, name, phoneNumber, barcode, hoursWorked]
-//         );
-//       }
-//     }
-//   };
-//   const main = async () => {
-//     console.log('111');
-//     try {
-//       console.log('2222');
-//       const xmlData = await parseXMLFile('./db/ВыгрузкаXML.XML');
-//       const users = xmlData;
-//       console.log('33333');
-//       // const users = xmlData;
-//       // console.log(users);
-//       await insertDataToPostgres(users);
-//       console.log('Data successfully inserted into PostgreSQL');
-//     } catch (err) {
-//       console.error('Error:', err);
-//     } finally {
-//       client.end();
-//     }
-//   };
-// main();
+}
+exports.updateXMLData = updateXMLData;
+// export const importXMLData = async (filePath: string = './db/ВыгрузкаXML.XML') => {
+//   try {
+//     const xmlData = await parseXMLFile(filePath);
+//     await insertDataToPostgres(xmlData);
+//   } catch (err) {
+//     console.error('Error during XML data import:', err);
+//   }
+// };
