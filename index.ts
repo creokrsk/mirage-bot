@@ -1,7 +1,12 @@
-require('dotenv').config();
-const bwipjs = require('bwip-js');
+import 'dotenv/config';
+import bwipjs from 'bwip-js';
 
-const { Bot, GrammyError, HttpError, InputFile } = require('grammy');
+import { Bot, GrammyError, HttpError, InputFile, Keyboard, Context } from 'grammy';
+import { Message } from 'grammy/types';
+// require('dotenv').config();
+// const bwipjs = require('bwip-js');
+
+// const { Bot, GrammyError, HttpError, InputFile } = require('grammy');
 // const { ReqTodb } = require('./reqtodb');
 
 // const fs = require('fs');
@@ -19,7 +24,8 @@ const { Bot, GrammyError, HttpError, InputFile } = require('grammy');
 //   }
 // });
 
-const bot = new Bot(process.env.BOT_API_KEY);
+// const bot = new Bot(process.env.BOT_API_KEY);
+const bot = new Bot(process.env.BOT_API_KEY as string);
 
 bot.api.setMyCommands([
   {
@@ -34,6 +40,10 @@ bot.api.setMyCommands([
     command: 'barcode',
     description: 'показать штрихкод сотрудника',
   },
+  {
+    command: 'getphone',
+    description: 'отправить номер телефона',
+  },
 ]);
 
 bot.command('start', async (ctx) => {
@@ -46,6 +56,20 @@ bot.command('time', async (ctx) => {
 
 bot.command(['money', 'mymoney'], async (ctx) => {
   await ctx.reply('за последний месяц вам будет начисленно Х рублей!');
+});
+
+const keyboard = new Keyboard().requestContact('Отправить контакт').resized();
+
+bot.command('getphone', async (ctx) => {
+  await ctx.reply('Пожалуйста, отправьте свой контакт', {
+    reply_markup: keyboard,
+  });
+});
+
+bot.on('message:contact', async (ctx) => {
+  const phoneNumber = ctx.message.contact.phone_number;
+  console.log(ctx.msg);
+  await ctx.reply(`Ваш номер телефона: ${phoneNumber}`);
 });
 
 bot.on('message:voice', async (ctx) => {
@@ -65,26 +89,54 @@ bot.hears(['ping', 'hi', 'пинг'], async (ctx) => {
 });
 
 bot.hears('ID', async (ctx) => {
-  await ctx.reply(`Ваш Id: ${ctx.from.id}`);
+  await ctx.reply(`Ваш Id: ${ctx.from?.id}`);
 });
 
-bot.hears('barcode', async (ctx) => {
-  const generateBarcode = async (text, barcodeType = 'code128') => {
+// bot.hears('barcode', async (ctx) => {
+//   const generateBarcode = async (text: string, barcodeType = 'code128') => {
+//   try {
+//     const { buffer: arrayBuffer } = bwipjs.toBuffer({
+//       bcid: barcodeType, // Тип штрихкода (например, code128, code39, ean13)
+//       text: text,
+//       scale: 3,
+//       height: 15,
+//       includetext: true,
+//       textxalign: 'center',
+//       padding: 10,
+//     });
+//     const buffer = Buffer.from(arrayBuffer);
+//     return buffer;
+//   } catch (err) {
+//     console.error(err);
+//     return 'Ошибка при генерации штрихкода';
+//   }
+// };
+
+// bot.hears('barcode', async (ctx) => {
+bot.command('barcode', async (ctx) => {
+  const generateBarcode = async (
+    text: string,
+    barcodeType: string = 'code128'
+  ): Promise<Buffer | null> => {
     try {
-      const { buffer: arrayBuffer } = await bwipjs.toBuffer({
-        bcid: barcodeType, // Тип штрихкода (например, code128, code39, ean13)
-        text: text,
+      const result = await bwipjs.toBuffer({
+        bcid: barcodeType,
+        text,
         scale: 3,
         height: 15,
         includetext: true,
         textxalign: 'center',
         padding: 10,
       });
-      const buffer = Buffer.from(arrayBuffer);
-      return buffer;
+
+      if (result && result.buffer) {
+        return Buffer.from(result.buffer);
+      } else {
+        return null;
+      }
     } catch (err) {
       console.error(err);
-      return 'Ошибка при генерации штрихкода';
+      return null;
     }
   };
 
@@ -107,7 +159,7 @@ bot.hears('barcode', async (ctx) => {
 
 bot.on('msg').filter(
   (ctx) => {
-    return ctx.from.id === 25711166;
+    return ctx.from?.id === 25711166;
   },
   async (ctx) => {
     await ctx.reply('Hello Alex');
