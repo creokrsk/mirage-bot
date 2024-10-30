@@ -122,6 +122,9 @@ const mainKeyboard = new Keyboard()
   .row()
   .text('Остаток средств для столовой')
   .resized()
+  .row()
+  .text('Отправить сообщение руководству')
+  .resized()
   .row();
 
 bot.command('start', async (ctx) => {
@@ -208,7 +211,74 @@ bot.hears('Узнать колличество отработанных часо
   });
 });
 
+// bot.on('callback_query:data', async (ctx) => {
+//   console.log(ctx.callbackQuery);
+//   await ctx.answerCallbackQuery();
+//   if (ctx.callbackQuery.data === 'this-month') {
+//     if (ctx.callbackQuery) {
+//       const tgId = ctx.callbackQuery.from.id;
+//       const userInfo = await getUserByTgId(tgId);
+//       if (!userInfo) {
+//         await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+//       }
+
+//       await ctx.reply(`Часов отработано в этом месяце: ${userInfo[0].hours_worked}`);
+//     } else {
+//       // await ctx.reply('Эта команда доступна только в личных чатах.');
+//       await ctx.reply('В данный момент эта команда недоступна.');
+//     }
+//   }
+//   if (ctx.callbackQuery.data === 'this-month-days') {
+//     if (ctx.callbackQuery) {
+//       const tgId = ctx.callbackQuery.from.id;
+//       const userInfo = await getUserByTgId(tgId);
+//       if (!userInfo) {
+//         await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+//       }
+
+//       await ctx.reply('Просмотр отработанных часов по дням пока недоступен');
+//     } else {
+//       // await ctx.reply('Эта команда доступна только в личных чатах.');
+//       await ctx.reply('В данный момент эта команда недоступна.');
+//     }
+//   }
+//   if (ctx.callbackQuery.data === 'previous-month') {
+//     if (ctx.callbackQuery) {
+//       const tgId = ctx.callbackQuery.from.id;
+//       const userInfo = await getUserByTgId(tgId);
+//       if (!userInfo) {
+//         await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+//       }
+
+//       await ctx.reply('Просмотр отработанных часов в прошедшем месяце пока недоступен');
+//     } else {
+//       // await ctx.reply('Эта команда доступна только в личных чатах.');
+//       await ctx.reply('В данный момент эта команда недоступна.');
+//     }
+//   }
+// });
+
+bot.hears('Остаток средств для столовой', async (ctx) => {
+  await ctx.reply(`Остаток средства на вашем счете : Х. Ваш Id: ${ctx.from?.id}`);
+});
+
+bot.hears('Отправить сообщение руководству', async (ctx) => {
+  const messageKeyboard = new InlineKeyboard()
+    .text('Сообщение для директора', 'message-dir')
+    .row()
+    .text('Сообщение для учредителя', 'message-founder')
+    .row()
+    .text('Сообщение для главного бухгалтера', 'message-accountant');
+
+  ctx.reply('Кому вы хотите отправить сообщение?', {
+    reply_markup: messageKeyboard,
+  });
+});
+
 bot.on('callback_query:data', async (ctx) => {
+  await ctx.answerCallbackQuery();
+  // console.log(ctx.callbackQuery);
+
   await ctx.answerCallbackQuery();
   if (ctx.callbackQuery.data === 'this-month') {
     if (ctx.callbackQuery) {
@@ -252,10 +322,27 @@ bot.on('callback_query:data', async (ctx) => {
       await ctx.reply('В данный момент эта команда недоступна.');
     }
   }
-});
 
-bot.hears('Остаток средств для столовой', async (ctx) => {
-  await ctx.reply(`Остаток средства на вашем счете : Х. Ваш Id: ${ctx.from?.id}`);
+  if (ctx.callbackQuery.data === 'message-dir') {
+    // await ctx.reply('Эта команда доступна только в личных чатах.');
+    await ctx.reply('В данный момент отправка сообщений директору недоступна.');
+  }
+  if (ctx.callbackQuery.data === 'message-founder') {
+    if (ctx.callbackQuery) {
+      console.log(ctx.callbackQuery);
+
+      // await ctx.reply('Эта команда доступна только в личных чатах.');
+      await ctx.reply('В данный момент отправка сообщений учредителю недоступна.');
+    }
+  }
+  if (ctx.callbackQuery.data === 'message-accountant') {
+    if (ctx.callbackQuery) {
+      console.log(ctx.callbackQuery);
+
+      // await ctx.reply('Эта команда доступна только в личных чатах.');
+      await ctx.reply('В данный момент отправка сообщений главному бухгалтеру недоступна.');
+    }
+  }
 });
 
 bot.command(['money', 'mymoney'], async (ctx) => {
@@ -281,30 +368,6 @@ bot.hears(['ping', 'hi', 'пинг'], async (ctx) => {
 bot.hears('ID', async (ctx) => {
   await ctx.reply(`Ваш Id: ${ctx.from?.id}`);
 });
-
-// bot.hears('barcode', async (ctx) => {
-//   const generateBarcode = async (text: string, barcodeType = 'code128') => {
-//   try {
-//     const { buffer: arrayBuffer } = bwipjs.toBuffer({
-//       bcid: barcodeType, // Тип штрихкода (например, code128, code39, ean13)
-//       text: text,
-//       scale: 3,
-//       height: 15,
-//       includetext: true,
-//       textxalign: 'center',
-//       padding: 10,
-//     });
-//     const buffer = Buffer.from(arrayBuffer);
-//     return buffer;
-//   } catch (err) {
-//     console.error(err);
-//     return 'Ошибка при генерации штрихкода';
-//   }
-// };
-
-// bot.hears('barcode', async (ctx) => {
-
-// bot.command('barcode', async (ctx) => {
 
 bot.on('msg').filter(
   (ctx) => {
