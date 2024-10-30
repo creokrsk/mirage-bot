@@ -2,7 +2,16 @@ import 'dotenv/config';
 import bwipjs from 'bwip-js';
 import { CronJob } from 'cron';
 
-import { Bot, GrammyError, HttpError, InputFile, Keyboard, Context } from 'grammy';
+import {
+  Bot,
+  GrammyError,
+  HttpError,
+  InputFile,
+  Keyboard,
+  InlineKeyboard,
+  ReplyKeyboardRemove,
+  Context,
+} from 'grammy';
 import { Message } from 'grammy/types';
 import { query, getUsers, updateUserTgId } from './reqFromPostgres';
 import { updateXMLData } from './importXmlToPostgres';
@@ -110,11 +119,11 @@ bot.command('start', async (ctx) => {
   );
 });
 
-const keyboard = new Keyboard().requestContact('Отправить контакт').resized();
+const getphoneKeyboard = new Keyboard().requestContact('Отправить контакт').resized().oneTime();
 
 bot.command('getphone', async (ctx) => {
   await ctx.reply('Пожалуйста, отправьте свой контакт', {
-    reply_markup: keyboard,
+    reply_markup: getphoneKeyboard,
   });
 });
 
@@ -127,22 +136,66 @@ bot.on('message:contact', async (ctx) => {
 
   await getUserByPhone(formatPhone);
   await updateUserTgId(formatPhone, ctx.from.id);
-  await ctx.reply(`Ваш номер телефона: ${phoneNumber}`);
+
+  await ctx.reply(`Спасибо! Ваш номер телефона: ${phoneNumber}`, {
+    reply_markup: { remove_keyboard: true },
+  });
+  // await ctx.reply(`Ваш номер телефона: ${phoneNumber}`);
 });
 
 bot.command('time', async (ctx) => {
-  // console.log(ctx);
-  if (ctx.update.message) {
-    const tgId = ctx.update.message.from.id;
-    const userInfo = await getUserByTgId(tgId);
-    if (!userInfo) {
-      await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
-    }
+  const timeKeyboard = new InlineKeyboard()
+    .text('Отработано в этом месяце всего', 'this-month')
+    .row()
+    .text('Отработано в этом месяце по дням', 'this-month-days')
+    .row()
+    .text('Отработано в прошлом месяце', 'previous-month');
 
-    await ctx.reply(`Вы отработали ${userInfo[0].hours_worked} часов`);
-  } else {
-    // await ctx.reply('Эта команда доступна только в личных чатах.');
-    await ctx.reply('В данный момент эта команда недоступна.');
+  ctx.reply('Выберите какую информкцию об отработаных часах вы хотите узнать', {
+    reply_markup: timeKeyboard,
+  });
+
+  // console.log(ctx);
+  // if (ctx.update.message) {
+  //   const tgId = ctx.update.message.from.id;
+  //   const userInfo = await getUserByTgId(tgId);
+  //   if (!userInfo) {
+  //     await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+  //   }
+
+  //   await ctx.reply(`Вы отработали ${userInfo[0].hours_worked} часов`);
+  // } else {
+  //   // await ctx.reply('Эта команда доступна только в личных чатах.');
+  //   await ctx.reply('В данный момент эта команда недоступна.');
+  // }
+});
+
+// bot.callbackQuery(['this-month', 'this-month-days', 'previous-month'], async (ctx) => {
+//   await ctx.answerCallbackQuery('Вы выбрали посмотреть информацио об отработанных часах за 123');
+//   await ctx.reply('вы выбрали');
+// });
+
+bot.on('callback_query:data', async (ctx) => {
+  await ctx.answerCallbackQuery();
+  if (ctx.callbackQuery.data === 'this-month') {
+    if (ctx.callbackQuery) {
+      const tgId = ctx.callbackQuery.from.id;
+      const userInfo = await getUserByTgId(tgId);
+      if (!userInfo) {
+        await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+      }
+
+      await ctx.reply(`Часов отработано в этом месяце: ${userInfo[0].hours_worked}`);
+    } else {
+      // await ctx.reply('Эта команда доступна только в личных чатах.');
+      await ctx.reply('В данный момент эта команда недоступна.');
+    }
+  }
+  if (ctx.callbackQuery.data === 'this-month-days') {
+    await ctx.reply('Просмотр отработанных часов по дням пока недоступен');
+  }
+  if (ctx.callbackQuery.data === 'previous-month') {
+    await ctx.reply('Просмотр отработанных часов в прошедшем месяце пока недоступен');
   }
 });
 
@@ -250,7 +303,8 @@ bot.command('barcode', async (ctx) => {
 
 bot.on('msg').filter(
   (ctx) => {
-    return ctx.from?.id === 25711166;
+    // return ctx.from?.id === 25711166;
+    return ctx.from?.id === 2571116;
   },
   async (ctx) => {
     await ctx.reply('Hello Alex');
@@ -260,7 +314,9 @@ bot.on('msg').filter(
 bot.on('msg', async (ctx) => {
   console.log(ctx.msg);
 
-  await ctx.reply('Вы пока что не зарегистрированы');
+  await ctx.reply(
+    `Вы пока что не зарегистрированы. Для регистрации пройдите в меню или нажмите '/getphone'`
+  );
 });
 
 bot.catch((error) => {
