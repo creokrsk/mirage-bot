@@ -100,22 +100,36 @@ bot.api.setMyCommands([
     description: 'Запуск бота',
   },
   {
-    command: 'time',
-    description: 'Узнать колличество отработанных часов за полседний месяц',
+    command: 'menu',
+    description: 'показать меню',
   },
-  {
-    command: 'barcode',
-    description: 'показать штрихкод сотрудника',
-  },
-  {
-    command: 'getphone',
-    description: 'отправить номер телефона',
-  },
+  // {
+  //   command: 'barcode',
+  //   description: 'показать штрихкод сотрудника',
+  // },
+  // {
+  //   command: 'getphone',
+  //   description: 'отправить номер телефона',
+  // },
 ]);
+
+const mainKeyboard = new Keyboard()
+  .text('показать штрихкод')
+  .resized()
+  .row()
+  .text('Узнать колличество отработанных часов')
+  .resized()
+  .row()
+  .text('Остаток средств для столовой')
+  .resized()
+  .row();
 
 bot.command('start', async (ctx) => {
   await ctx.reply(
     'Привет! Это бот ООО Мираж! для полноценной работы вы должны поделиться своим номером телефона, для этого нужно выполнить команду /getphone'
+    // {
+    //   reply_markup: mainKeyboard,
+    // }
   );
 });
 
@@ -143,7 +157,45 @@ bot.on('message:contact', async (ctx) => {
   // await ctx.reply(`Ваш номер телефона: ${phoneNumber}`);
 });
 
-bot.command('time', async (ctx) => {
+bot.command('menu', async (ctx) => {
+  await ctx.reply('Выберите один из пунктов меню', {
+    reply_markup: mainKeyboard,
+  });
+});
+
+bot.hears('показать штрихкод', async (ctx) => {
+  if (ctx.update.message) {
+    const tgId = ctx.update.message.from.id;
+    const userInfo = await getUserByTgId(tgId);
+    if (!userInfo) {
+      await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+    }
+
+    // await ctx.reply(`Вы отработали ${userInfo[0].barcode} часов`);
+    // const barcodeBuffer = await generateBarcode('1000003105372');
+    const barcodeBuffer = await generateBarcode(userInfo[0].barcode);
+
+    if (barcodeBuffer) {
+      try {
+        // console.log(barcodeBuffer);
+        const inputFile = new InputFile(barcodeBuffer, 'barcode.png');
+        await ctx.replyWithPhoto(inputFile);
+        console.log('Штрихкод отправлен успешно');
+      } catch (err) {
+        // console.error('Ошибка при отправке штрихкода:', err);
+        await ctx.reply('Ошибка при отправке штрихкода');
+      }
+    } else {
+      await ctx.reply('Ошибка при генерации штрихкода');
+    }
+  } else {
+    // await ctx.reply('Эта команда доступна только в личных чатах.');
+    await ctx.reply('В данный момент эта команда недоступна.');
+  }
+});
+
+// bot.command('time', async (ctx) => {
+bot.hears('Узнать колличество отработанных часов', async (ctx) => {
   const timeKeyboard = new InlineKeyboard()
     .text('Отработано в этом месяце всего', 'this-month')
     .row()
@@ -154,26 +206,7 @@ bot.command('time', async (ctx) => {
   ctx.reply('Выберите какую информкцию об отработаных часах вы хотите узнать', {
     reply_markup: timeKeyboard,
   });
-
-  // console.log(ctx);
-  // if (ctx.update.message) {
-  //   const tgId = ctx.update.message.from.id;
-  //   const userInfo = await getUserByTgId(tgId);
-  //   if (!userInfo) {
-  //     await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
-  //   }
-
-  //   await ctx.reply(`Вы отработали ${userInfo[0].hours_worked} часов`);
-  // } else {
-  //   // await ctx.reply('Эта команда доступна только в личных чатах.');
-  //   await ctx.reply('В данный момент эта команда недоступна.');
-  // }
 });
-
-// bot.callbackQuery(['this-month', 'this-month-days', 'previous-month'], async (ctx) => {
-//   await ctx.answerCallbackQuery('Вы выбрали посмотреть информацио об отработанных часах за 123');
-//   await ctx.reply('вы выбрали');
-// });
 
 bot.on('callback_query:data', async (ctx) => {
   await ctx.answerCallbackQuery();
@@ -192,11 +225,37 @@ bot.on('callback_query:data', async (ctx) => {
     }
   }
   if (ctx.callbackQuery.data === 'this-month-days') {
-    await ctx.reply('Просмотр отработанных часов по дням пока недоступен');
+    if (ctx.callbackQuery) {
+      const tgId = ctx.callbackQuery.from.id;
+      const userInfo = await getUserByTgId(tgId);
+      if (!userInfo) {
+        await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+      }
+
+      await ctx.reply('Просмотр отработанных часов по дням пока недоступен');
+    } else {
+      // await ctx.reply('Эта команда доступна только в личных чатах.');
+      await ctx.reply('В данный момент эта команда недоступна.');
+    }
   }
   if (ctx.callbackQuery.data === 'previous-month') {
-    await ctx.reply('Просмотр отработанных часов в прошедшем месяце пока недоступен');
+    if (ctx.callbackQuery) {
+      const tgId = ctx.callbackQuery.from.id;
+      const userInfo = await getUserByTgId(tgId);
+      if (!userInfo) {
+        await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+      }
+
+      await ctx.reply('Просмотр отработанных часов в прошедшем месяце пока недоступен');
+    } else {
+      // await ctx.reply('Эта команда доступна только в личных чатах.');
+      await ctx.reply('В данный момент эта команда недоступна.');
+    }
   }
+});
+
+bot.hears('Остаток средств для столовой', async (ctx) => {
+  await ctx.reply(`Остаток средства на вашем счете : Х. Ваш Id: ${ctx.from?.id}`);
 });
 
 bot.command(['money', 'mymoney'], async (ctx) => {
@@ -244,62 +303,8 @@ bot.hears('ID', async (ctx) => {
 // };
 
 // bot.hears('barcode', async (ctx) => {
-bot.command('barcode', async (ctx) => {
-  // const generateBarcode = async (
-  //   text: string,
-  //   barcodeType: string = 'code128'
-  // ): Promise<Buffer | null> => {
-  //   try {
-  //     const result = await bwipjs.toBuffer({
-  //       bcid: barcodeType,
-  //       text,
-  //       scale: 3,
-  //       height: 15,
-  //       includetext: true,
-  //       textxalign: 'center',
-  //       padding: 10,
-  //     });
 
-  //     if (result && result.buffer) {
-  //       return Buffer.from(result.buffer);
-  //     } else {
-  //       return null;
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //     return null;
-  //   }
-  // };
-
-  if (ctx.update.message) {
-    const tgId = ctx.update.message.from.id;
-    const userInfo = await getUserByTgId(tgId);
-    if (!userInfo) {
-      await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
-    }
-
-    // await ctx.reply(`Вы отработали ${userInfo[0].barcode} часов`);
-    // const barcodeBuffer = await generateBarcode('1000003105372');
-    const barcodeBuffer = await generateBarcode(userInfo[0].barcode);
-
-    if (barcodeBuffer) {
-      try {
-        // console.log(barcodeBuffer);
-        const inputFile = new InputFile(barcodeBuffer, 'barcode.png');
-        await ctx.replyWithPhoto(inputFile);
-        console.log('Штрихкод отправлен успешно');
-      } catch (err) {
-        // console.error('Ошибка при отправке штрихкода:', err);
-        await ctx.reply('Ошибка при отправке штрихкода');
-      }
-    } else {
-      await ctx.reply('Ошибка при генерации штрихкода');
-    }
-  } else {
-    // await ctx.reply('Эта команда доступна только в личных чатах.');
-    await ctx.reply('В данный момент эта команда недоступна.');
-  }
-});
+// bot.command('barcode', async (ctx) => {
 
 bot.on('msg').filter(
   (ctx) => {
@@ -314,9 +319,7 @@ bot.on('msg').filter(
 bot.on('msg', async (ctx) => {
   console.log(ctx.msg);
 
-  await ctx.reply(
-    `Вы пока что не зарегистрированы. Для регистрации пройдите в меню или нажмите '/getphone'`
-  );
+  await ctx.reply(`Данная команда не поддерживается`);
 });
 
 bot.catch((error) => {
