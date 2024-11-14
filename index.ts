@@ -2,16 +2,7 @@ import 'dotenv/config';
 import bwipjs from 'bwip-js';
 import { CronJob } from 'cron';
 
-import {
-  Bot,
-  GrammyError,
-  HttpError,
-  InputFile,
-  Keyboard,
-  InlineKeyboard,
-  ReplyKeyboardRemove,
-  Context,
-} from 'grammy';
+import { Bot, GrammyError, HttpError, InputFile, Keyboard, InlineKeyboard, Context } from 'grammy';
 import { Message } from 'grammy/types';
 import { query, getUsers, updateUserTgId } from './reqFromPostgres';
 import { updateXMLData } from './importXmlToPostgres';
@@ -46,6 +37,34 @@ const getUserByTgId = async (tgId: number) => {
     console.error('Ошибка при получении пользователя:', error);
   }
 };
+
+async function getWorkedHours(
+  tgId: number
+): Promise<{ dailyHours: { day: number; hours: number }[] } | null> {
+  try {
+    const hoursResult = await query(
+      `
+      SELECT * FROM worked_hours WHERE tg_id = $1`,
+      [tgId]
+    );
+
+    // console.log(hoursResult);
+
+    if (hoursResult.rows.length > 0) {
+      const dailyHours = hoursResult.rows;
+
+      // console.log(dailyHours);
+
+      return { dailyHours };
+    } else {
+      console.log(`Данные о часах для пользователя ${tgId} не найдены`);
+      return null;
+    }
+  } catch (error) {
+    console.error('Ошибка при получении данных о часах:', error);
+    return null; // Или throw error;
+  }
+}
 
 function formatPhoneNumber(phoneNumber: string): string {
   if (phoneNumber.length !== 11 && phoneNumber.length !== 12) {
@@ -282,29 +301,88 @@ bot.on('callback_query:data', async (ctx) => {
   await ctx.answerCallbackQuery();
   if (ctx.callbackQuery.data === 'this-month') {
     if (ctx.callbackQuery) {
+      // const tgId = ctx.callbackQuery.from.id;
+      // const userInfo = await getUserByTgId(tgId);
+      // if (!userInfo) {
+      //   await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+      // }
+
+      // await ctx.reply(`Часов отработано в этом месяце: ${userInfo[0].hours_worked}`);
       const tgId = ctx.callbackQuery.from.id;
-      const userInfo = await getUserByTgId(tgId);
-      if (!userInfo) {
+      // const userData = await getUserByTgId(tgId);
+      const userData = await getWorkedHours(tgId);
+
+      if (!userData) {
         await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+        return;
       }
 
-      await ctx.reply(`Часов отработано в этом месяце: ${userInfo[0].hours_worked}`);
+      const { dailyHours } = userData;
+
+      // let message = `Сумма отработанных часов за месяц: ${totalHours || 0}\n`;
+      let sumHours = 0;
+
+      if (dailyHours && dailyHours.length > 0) {
+        // message += 'Отработанные часы по дням:\n';
+        dailyHours.forEach((dayData) => {
+          if (dayData.hours) {
+            sumHours += Number(dayData.hours);
+          }
+        });
+      } else {
+        await ctx.reply('Просмотр отработанных часов в этом месяце пока недоступен');
+      }
+
+      await ctx.reply(`${sumHours}  часов отработано вэтом месяце`);
     } else {
       // await ctx.reply('Эта команда доступна только в личных чатах.');
       await ctx.reply('В данный момент эта команда недоступна.');
     }
   }
+  // if (ctx.callbackQuery.data === 'this-month-days') {
+  //   if (ctx.callbackQuery) {
+  //     const tgId = ctx.callbackQuery.from.id;
+  //     const userInfo = await getUserByTgId(tgId);
+  //     if (!userInfo) {
+  //       await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+  //     }
+
+  //     await ctx.reply('Просмотр отработанных часов по дням пока недоступен');
+  //   } else {
+  //     // await ctx.reply('Эта команда доступна только в личных чатах.');
+  //     await ctx.reply('В данный момент эта команда недоступна.');
+  //   }
+  // }
   if (ctx.callbackQuery.data === 'this-month-days') {
     if (ctx.callbackQuery) {
       const tgId = ctx.callbackQuery.from.id;
-      const userInfo = await getUserByTgId(tgId);
-      if (!userInfo) {
+      // const userData = await getUserByTgId(tgId);
+      const userData = await getWorkedHours(tgId);
+
+      if (!userData) {
         await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+        return;
       }
 
-      await ctx.reply('Просмотр отработанных часов по дням пока недоступен');
+      const { dailyHours } = userData;
+
+      // let message = `Сумма отработанных часов за месяц: ${totalHours || 0}\n`;
+      let message = '';
+
+      if (dailyHours && dailyHours.length > 0) {
+        message += 'Отработанные часы по дням:\n';
+        dailyHours.forEach((dayData) => {
+          if (dayData.day && dayData.hours) {
+            //Добавляем проверку чтобы избежать ошибки Cannot read properties of undefined (reading 'day')
+            message += `${dayData.day}: ${dayData.hours} часов\n`;
+          }
+        });
+      } else {
+        message += 'Данные о часах по дням отсутствуют.\n';
+      }
+
+      await ctx.reply(message);
     } else {
-      // await ctx.reply('Эта команда доступна только в личных чатах.');
       await ctx.reply('В данный момент эта команда недоступна.');
     }
   }
@@ -402,9 +480,10 @@ bot.catch((error) => {
 bot.start();
 
 const job = new CronJob(
+  // '5 * * * * *',
   '0 3 * * *', // cronTime
   function () {
-    const filePath = './db/ВыгрузкаXML.XML';
+    const filePath = './db/ВыгрузкаXML (3).XML';
     updateXMLData(filePath);
     console.log('data is updated');
   }, // onTick
