@@ -23,7 +23,7 @@ const updateUserOrInsert = async (data: any) => {
     user: 'mirage_bot',
     host: 'localhost',
     database: 'mirage',
-    password: '',
+    password: 'password',
     port: 5432,
   });
 

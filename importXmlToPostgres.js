@@ -57,15 +57,15 @@ var parseXMLFile = function (filePath) {
 };
 var updateUserOrInsert = function (data) { return __awaiter(void 0, void 0, void 0, function () {
     var client, users, _a, _b, _c, _i, userKey, user, name_1, phoneNumber, barcode, existsResult, workedHoursData, onlyFirstDay, _d, _e, _f, _g, dateKey, day, hours, err_1;
-    var _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
-    return __generator(this, function (_t) {
-        switch (_t.label) {
+    var _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
+    return __generator(this, function (_u) {
+        switch (_u.label) {
             case 0:
                 client = new pg_1.Client({
-                    user: 'creo',
+                    user: 'mirage_bot',
                     host: 'localhost',
                     database: 'mirage',
-                    password: '',
+                    password: 'password',
                     port: 5432,
                 });
                 // CREATE TABLE users (
@@ -98,17 +98,17 @@ var updateUserOrInsert = function (data) { return __awaiter(void 0, void 0, void
                 // );
                 //   ALTER TABLE worked_hours
                 // ADD CONSTRAINT unique_user_day UNIQUE (user_n, day);
-                _t.sent();
-                _t.label = 2;
+                _u.sent();
+                _u.label = 2;
             case 2:
-                _t.trys.push([2, 16, 17, 19]);
+                _u.trys.push([2, 16, 17, 19]);
                 users = data['Выгрузка'];
                 _a = users;
                 _b = [];
                 for (_c in _a)
                     _b.push(_c);
                 _i = 0;
-                _t.label = 3;
+                _u.label = 3;
             case 3:
                 if (!(_i < _b.length)) return [3 /*break*/, 15];
                 _c = _b[_i];
@@ -121,18 +121,18 @@ var updateUserOrInsert = function (data) { return __awaiter(void 0, void 0, void
                 barcode = ((_r = (_q = (_p = user.ШтрихКод) === null || _p === void 0 ? void 0 : _p[0]) === null || _q === void 0 ? void 0 : _q.ШтрихКод) === null || _r === void 0 ? void 0 : _r[0]) || null;
                 return [4 /*yield*/, client.query('SELECT 1 FROM users WHERE user_n = $1', [userKey])];
             case 4:
-                existsResult = _t.sent();
+                existsResult = _u.sent();
                 if (!(existsResult.rows.length > 0)) return [3 /*break*/, 6];
                 return [4 /*yield*/, client.query('UPDATE users SET name = $1, phone_number = $2, barcode = $3 WHERE user_n = $4', [name_1, phoneNumber, barcode, userKey])];
             case 5:
-                _t.sent();
+                _u.sent();
                 console.log("\u0414\u0430\u043D\u043D\u044B\u0435 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F ".concat(userKey, " \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B"));
                 return [3 /*break*/, 8];
             case 6: return [4 /*yield*/, client.query('INSERT INTO users (user_n, name, phone_number, barcode) VALUES ($1, $2, $3, $4)', [userKey, name_1, phoneNumber, barcode])];
             case 7:
-                _t.sent();
+                _u.sent();
                 console.log("\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C ".concat(userKey, " \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D"));
-                _t.label = 8;
+                _u.label = 8;
             case 8:
                 workedHoursData = ((_s = user.ОтработанныеЧасы) === null || _s === void 0 ? void 0 : _s[0]) || null;
                 if (!workedHoursData) return [3 /*break*/, 14];
@@ -140,16 +140,16 @@ var updateUserOrInsert = function (data) { return __awaiter(void 0, void 0, void
                 if (!onlyFirstDay) return [3 /*break*/, 10];
                 return [4 /*yield*/, client.query('DELETE FROM worked_hours WHERE user_n = $1', [userKey])];
             case 9:
-                _t.sent();
+                _u.sent();
                 console.log("\u0422\u0430\u0431\u043B\u0438\u0446\u0430 worked_hours \u043E\u0431\u043D\u0443\u043B\u0435\u043D\u0430 \u0434\u043B\u044F \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F ".concat(userKey));
-                _t.label = 10;
+                _u.label = 10;
             case 10:
                 _d = workedHoursData;
                 _e = [];
                 for (_f in _d)
                     _e.push(_f);
                 _g = 0;
-                _t.label = 11;
+                _u.label = 11;
             case 11:
                 if (!(_g < _e.length)) return [3 /*break*/, 14];
                 _f = _e[_g];
@@ -157,11 +157,11 @@ var updateUserOrInsert = function (data) { return __awaiter(void 0, void 0, void
                 dateKey = _f;
                 if (!(workedHoursData.hasOwnProperty(dateKey) && dateKey.startsWith('А'))) return [3 /*break*/, 13];
                 day = parseInt(dateKey.substring(1));
-                hours = parseFloat(workedHoursData[dateKey][0] || '0');
+                hours = parseFloat(((_t = workedHoursData[dateKey][0]) === null || _t === void 0 ? void 0 : _t.replace(',', '.')) || '0');
                 return [4 /*yield*/, client.query('INSERT INTO worked_hours (user_n, day, hours) VALUES ($1, $2, $3) ON CONFLICT (user_n, day) DO UPDATE SET hours = $3', [userKey, day, hours])];
             case 12:
-                _t.sent();
-                _t.label = 13;
+                _u.sent();
+                _u.label = 13;
             case 13:
                 _g++;
                 return [3 /*break*/, 11];
@@ -170,12 +170,12 @@ var updateUserOrInsert = function (data) { return __awaiter(void 0, void 0, void
                 return [3 /*break*/, 3];
             case 15: return [3 /*break*/, 19];
             case 16:
-                err_1 = _t.sent();
+                err_1 = _u.sent();
                 console.error('Error:', err_1);
                 return [3 /*break*/, 19];
             case 17: return [4 /*yield*/, client.end()];
             case 18:
-                _t.sent();
+                _u.sent();
                 return [7 /*endfinally*/];
             case 19: return [2 /*return*/];
         }
@@ -206,11 +206,3 @@ function updateXMLData(filePath) {
     });
 }
 exports.updateXMLData = updateXMLData;
-// export const importXMLData = async (filePath: string = './db/ВыгрузкаXML.XML') => {
-//   try {
-//     const xmlData = await parseXMLFile(filePath);
-//     await insertDataToPostgres(xmlData);
-//   } catch (err) {
-//     console.error('Error during XML data import:', err);
-//   }
-// };
