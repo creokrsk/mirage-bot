@@ -55,37 +55,6 @@ var parseXMLFile = function (filePath) {
         });
     });
 };
-// const insertDataToPostgres = async (data: any) => {
-//   const client = new Client({
-//     user: 'creo',
-//     host: 'localhost',
-//     database: 'mirage',
-//     password: '',
-//     port: 5432,
-//   });
-//   await client.connect();
-//   try {
-//     const users = data['Выгрузка'];
-//     for (const userKey in users) {
-//       if (users.hasOwnProperty(userKey)) {
-//         const user = users[userKey][0];
-//         const name = user.ФИО?.[0]?.ФИО?.[0] || null;
-//         const phoneNumber = user.НомерТелефона?.[0]?.НомерТелефона?.[0] || null;
-//         const barcode = user.ШтрихКод?.[0]?.ШтрихКод?.[0] || null;
-//         const hoursWorked = user.ОтработанныеЧасы?.[0]?.ОтработанныеЧасы?.[0] || null;
-//         await client.query(
-//           'INSERT INTO users (user_n, name, phone_number, barcode, hours_worked) VALUES ($1, $2, $3, $4, $5)',
-//           [userKey, name, phoneNumber, barcode, hoursWorked]
-//         );
-//       }
-//     }
-//     console.log('Data successfully inserted into PostgreSQL');
-//   } catch (err) {
-//     console.error('Error:', err);
-//   } finally {
-//     await client.end();
-//   }
-// };
 var updateUserOrInsert = function (data) { return __awaiter(void 0, void 0, void 0, function () {
     var client, users, _a, _b, _c, _i, userKey, user, name_1, phoneNumber, barcode, existsResult, workedHoursData, onlyFirstDay, _d, _e, _f, _g, dateKey, day, hours, err_1;
     var _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
@@ -99,8 +68,36 @@ var updateUserOrInsert = function (data) { return __awaiter(void 0, void 0, void
                     password: '',
                     port: 5432,
                 });
+                // CREATE TABLE users (
+                //   user_n VARCHAR(255) PRIMARY KEY,
+                //   name TEXT,
+                //   phone_number TEXT,
+                //   barcode TEXT
+                // );
+                // CREATE TABLE worked_hours (
+                //   id SERIAL PRIMARY KEY,
+                //   user_n VARCHAR(255) REFERENCES users(user_n),
+                //   day INTEGER,
+                //   hours NUMERIC
+                // );
+                //   ALTER TABLE worked_hours
+                // ADD CONSTRAINT unique_user_day UNIQUE (user_n, day);
                 return [4 /*yield*/, client.connect()];
             case 1:
+                // CREATE TABLE users (
+                //   user_n VARCHAR(255) PRIMARY KEY,
+                //   name TEXT,
+                //   phone_number TEXT,
+                //   barcode TEXT
+                // );
+                // CREATE TABLE worked_hours (
+                //   id SERIAL PRIMARY KEY,
+                //   user_n VARCHAR(255) REFERENCES users(user_n),
+                //   day INTEGER,
+                //   hours NUMERIC
+                // );
+                //   ALTER TABLE worked_hours
+                // ADD CONSTRAINT unique_user_day UNIQUE (user_n, day);
                 _t.sent();
                 _t.label = 2;
             case 2:

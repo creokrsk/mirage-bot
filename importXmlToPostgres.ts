@@ -58,22 +58,6 @@ const updateUserOrInsert = async (data: any) => {
 
   //       const existsResult = await client.query('SELECT 1 FROM users WHERE user_n = $1', [userKey]);
 
-  //       if (existsResult.rows.length > 0) {
-  //         await client.query(
-  //           'UPDATE users SET name = $1, phone_number = $2, barcode = $3, hours_worked = $4 WHERE user_n = $5',
-  //           [name, phoneNumber, barcode, hoursWorked, userKey]
-  //         );
-  //         console.log(`Данные пользователя ${userKey} обновлены`);
-  //       } else {
-  //         await client.query(
-  //           'INSERT INTO users (user_n, name, phone_number, barcode, hours_worked) VALUES ($1, $2, $3, $4, $5)',
-  //           [userKey, name, phoneNumber, barcode, hoursWorked]
-  //         );
-  //         console.log(`Пользователь ${userKey} добавлен`);
-  //       }
-  //     }
-  //   }
-  // }
   try {
     const users = data['Выгрузка'];
 
@@ -115,7 +99,8 @@ const updateUserOrInsert = async (data: any) => {
           for (const dateKey in workedHoursData) {
             if (workedHoursData.hasOwnProperty(dateKey) && dateKey.startsWith('А')) {
               const day = parseInt(dateKey.substring(1));
-              const hours = parseFloat(workedHoursData[dateKey][0] || '0');
+              // const hours = parseFloat(workedHoursData[dateKey][0] || '0');
+              const hours = parseFloat(workedHoursData[dateKey][0]?.replace(',', '.') || '0');
 
               await client.query(
                 'INSERT INTO worked_hours (user_n, day, hours) VALUES ($1, $2, $3) ON CONFLICT (user_n, day) DO UPDATE SET hours = $3',
@@ -141,12 +126,3 @@ export async function updateXMLData(filePath: string = './db/ВыгрузкаXML
     console.error('Error during XML data update:', err);
   }
 }
-
-// export const importXMLData = async (filePath: string = './db/ВыгрузкаXML.XML') => {
-//   try {
-//     const xmlData = await parseXMLFile(filePath);
-//     await insertDataToPostgres(xmlData);
-//   } catch (err) {
-//     console.error('Error during XML data import:', err);
-//   }
-// };

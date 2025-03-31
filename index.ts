@@ -42,11 +42,23 @@ async function getWorkedHours(
   tgId: number
 ): Promise<{ dailyHours: { day: number; hours: number }[] } | null> {
   try {
-    const hoursResult = await query(
-      `
-      SELECT * FROM worked_hours WHERE tg_id = $1`,
-      [tgId]
-    );
+    // const hoursResult = await query(
+    //   `
+    //   // SELECT * FROM worked_hours WHERE tg_id = $1`,
+    //   [tgId]
+    // );
+    const userResult = await query('SELECT user_n FROM users WHERE tg_id = $1', [tgId]);
+
+    if (userResult.rows.length === 0) {
+      console.log(`Пользователь с tgId ${tgId} не найден`);
+      return null;
+    }
+
+    const userN = userResult.rows[0].user_n;
+
+    const hoursResult = await query('SELECT day, hours FROM worked_hours WHERE user_n = $1', [
+      userN,
+    ]);
 
     // console.log(hoursResult);
 
@@ -62,7 +74,7 @@ async function getWorkedHours(
     }
   } catch (error) {
     console.error('Ошибка при получении данных о часах:', error);
-    return null; // Или throw error;
+    return null;
   }
 }
 
@@ -133,7 +145,7 @@ bot.api.setMyCommands([
 ]);
 
 const mainKeyboard = new Keyboard()
-  .text('показать штрихкод')
+  .text('Показать штрихкод')
   .resized()
   .row()
   .text('Узнать колличество отработанных часов')
@@ -185,8 +197,12 @@ bot.command('menu', async (ctx) => {
   });
 });
 
-bot.hears('показать штрихкод', async (ctx) => {
+bot.hears('Показать штрихкод', async (ctx) => {
+  console.log('2222');
+
   if (ctx.update.message) {
+    console.log('111');
+
     const tgId = ctx.update.message.from.id;
     const userInfo = await getUserByTgId(tgId);
     if (!userInfo) {
@@ -483,7 +499,7 @@ const job = new CronJob(
   // '5 * * * * *',
   '0 3 * * *', // cronTime
   function () {
-    const filePath = './db/ВыгрузкаXML (3).XML';
+    const filePath = './db/ВыгрузкаXML.XML';
     updateXMLData(filePath);
     console.log('data is updated');
   }, // onTick
