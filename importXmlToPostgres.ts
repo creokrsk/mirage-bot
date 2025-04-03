@@ -20,10 +20,10 @@ const parseXMLFile = (filePath: string): Promise<any> => {
 
 const updateUserOrInsert = async (data: any) => {
   const client = new Client({
-    user: 'mirage_bot',
+    user: 'creo',
     host: 'localhost',
     database: 'mirage',
-    password: 'password',
+    password: '',
     port: 5432,
   });
 

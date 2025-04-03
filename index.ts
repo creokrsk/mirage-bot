@@ -101,7 +101,7 @@ async function generateBarcode(
   barcodeType: string = 'code128'
 ): Promise<Buffer | null> {
   try {
-    const result = await bwipjs.toBuffer({
+    const result: any = await bwipjs.toBuffer({
       bcid: barcodeType,
       text,
       scale: 3,
@@ -109,7 +109,7 @@ async function generateBarcode(
       includetext: true,
       textxalign: 'center',
       padding: 10,
-    });
+    } as any);
 
     if (result && result.buffer) {
       return Buffer.from(result.buffer);
@@ -198,33 +198,29 @@ bot.command('menu', async (ctx) => {
 });
 
 bot.hears('Показать штрихкод', async (ctx) => {
-  console.log('2222');
-
   if (ctx.update.message) {
-    console.log('111');
-
     const tgId = ctx.update.message.from.id;
     const userInfo = await getUserByTgId(tgId);
     if (!userInfo) {
       await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
-    }
-
-    // await ctx.reply(`Вы отработали ${userInfo[0].barcode} часов`);
-    // const barcodeBuffer = await generateBarcode('1000003105372');
-    const barcodeBuffer = await generateBarcode(userInfo[0].barcode);
-
-    if (barcodeBuffer) {
-      try {
-        // console.log(barcodeBuffer);
-        const inputFile = new InputFile(barcodeBuffer, 'barcode.png');
-        await ctx.replyWithPhoto(inputFile);
-        console.log('Штрихкод отправлен успешно');
-      } catch (err) {
-        // console.error('Ошибка при отправке штрихкода:', err);
-        await ctx.reply('Ошибка при отправке штрихкода');
-      }
     } else {
-      await ctx.reply('Ошибка при генерации штрихкода');
+      // await ctx.reply(`Вы отработали ${userInfo[0].barcode} часов`);
+      // const barcodeBuffer = await generateBarcode('1000003105372');
+      const barcodeBuffer = await generateBarcode(userInfo[0].barcode);
+
+      if (barcodeBuffer) {
+        try {
+          // console.log(barcodeBuffer);
+          const inputFile = new InputFile(barcodeBuffer, 'barcode.png');
+          await ctx.replyWithPhoto(inputFile);
+          console.log('Штрихкод отправлен успешно');
+        } catch (err) {
+          // console.error('Ошибка при отправке штрихкода:', err);
+          await ctx.reply('Ошибка при отправке штрихкода');
+        }
+      } else {
+        await ctx.reply('Ошибка при генерации штрихкода');
+      }
     }
   } else {
     // await ctx.reply('Эта команда доступна только в личных чатах.');

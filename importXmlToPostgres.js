@@ -62,10 +62,10 @@ var updateUserOrInsert = function (data) { return __awaiter(void 0, void 0, void
         switch (_u.label) {
             case 0:
                 client = new pg_1.Client({
-                    user: 'mirage_bot',
+                    user: 'creo',
                     host: 'localhost',
                     database: 'mirage',
-                    password: 'password',
+                    password: '',
                     port: 5432,
                 });
                 // CREATE TABLE users (

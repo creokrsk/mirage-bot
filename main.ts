@@ -27,7 +27,7 @@ const getUserName = async (nameToFind: string) => {
   try {
     const users = await query('SELECT * FROM users WHERE name = $1', [nameToFind]);
 
-    if (users.length > 0) {
+    if (users.rows.length > 0) {
       console.log('Найденные пользователи:', users);
     } else {
       console.log(`Пользователь с именем ${nameToFind} не найден`);
