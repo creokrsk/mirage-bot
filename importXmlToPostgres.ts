@@ -27,6 +27,14 @@ const updateUserOrInsert = async (data: any) => {
     port: 5432,
   });
 
+  // const client = new Client({
+  //   user: 'mirage_bot',
+  //   host: 'localhost',
+  //   database: 'mirage',
+  //   password: 'password',
+  //   port: 5432,
+  // });
+
   // CREATE TABLE users (
   //   user_n VARCHAR(255) PRIMARY KEY,
   //   name TEXT,
@@ -103,7 +111,9 @@ const updateUserOrInsert = async (data: any) => {
               const hours = parseFloat(workedHoursData[dateKey][0]?.replace(',', '.') || '0');
 
               await client.query(
-                'INSERT INTO worked_hours (user_n, day, hours) VALUES ($1, $2, $3) ON CONFLICT (user_n, day) DO UPDATE SET hours = $3',
+                // 'INSERT INTO worked_hours (user_n, day, hours) VALUES ($1, $2, $3) ON CONFLICT (user_n, day) DO UPDATE SET hours = $3',
+                // `INSERT INTO worked_hours (user_n, day, hours) VALUES ($1, $2, $3) ON CONFLICT ON CONSTRAINT unique_user_day DO UPDATE SET hours = excluded.hours`,
+                `INSERT INTO worked_hours (user_n, day, hours) VALUES ($1, $2, $3) ON CONFLICT ON CONSTRAINT unique_user_day DO UPDATE SET hours = $3`,
                 [userKey, day, hours]
               );
             }

@@ -8,6 +8,14 @@ const pool = new Pool({
   port: 5432,
 });
 
+// const pool = new Pool({
+//   user: 'mirage_bot',
+//   host: 'localhost',
+//   database: 'mirage',
+//   password: 'password',
+//   port: 5432,
+// });
+
 export const query = async (text: string, params?: any[]): Promise<QueryResult<any>> => {
   const client = await pool.connect();
   try {

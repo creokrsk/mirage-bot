@@ -1,11 +1,13 @@
 import 'dotenv/config';
-import bwipjs from 'bwip-js';
+import * as bwipjs from 'bwip-js';
+// import bwipjs from 'bwip-js';
 import { CronJob } from 'cron';
 
 import { Bot, GrammyError, HttpError, InputFile, Keyboard, InlineKeyboard, Context } from 'grammy';
 import { Message } from 'grammy/types';
 import { query, getUsers, updateUserTgId } from './reqFromPostgres';
 import { updateXMLData } from './importXmlToPostgres';
+import { downloadAndReplaceFile } from './ftpDownload';
 
 const getUserByPhone = async (phoneNumber: string) => {
   try {
@@ -492,10 +494,11 @@ bot.catch((error) => {
 bot.start();
 
 const job = new CronJob(
-  // '5 * * * * *',
-  '0 3 * * *', // cronTime
-  function () {
+  '5 * * * * *',
+  // '0 3 * * *', // cronTime
+  async function () {
     const filePath = './db/ВыгрузкаXML.XML';
+    // await downloadAndReplaceFile(filePath);
     updateXMLData(filePath);
     console.log('data is updated');
   }, // onTick
