@@ -42,7 +42,7 @@ const getUserByTgId = async (tgId: number) => {
 
 async function getWorkedHours(
   tgId: number
-): Promise<{ dailyHours: { day: number; hours: number }[] } | null> {
+): Promise<{ dailyHours: { day: Date; hours: number }[] } | null> {
   try {
     // const hoursResult = await query(
     //   `
@@ -124,7 +124,25 @@ async function generateBarcode(
   }
 }
 
-// getUserName('Тарасенко Николай\r\n\t\t\t');
+function filterDailyHoursByCurrentMonth(
+  dailyHours: { day: Date; hours: number }[],
+  month: string = 'current'
+) {
+  const nowDate = new Date();
+  let currentMonth;
+  if (month === 'current') {
+    currentMonth = nowDate.getMonth();
+  } else {
+    currentMonth = nowDate.getMonth() - 1;
+  }
+  const currentYear = nowDate.getFullYear();
+
+  return dailyHours.filter((dayData) => {
+    const date = new Date(dayData.day);
+    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+  });
+}
+
 const bot = new Bot(process.env.BOT_API_KEY as string);
 
 bot.api.setMyCommands([
@@ -136,14 +154,6 @@ bot.api.setMyCommands([
     command: 'menu',
     description: 'показать меню',
   },
-  // {
-  //   command: 'barcode',
-  //   description: 'показать штрихкод сотрудника',
-  // },
-  // {
-  //   command: 'getphone',
-  //   description: 'отправить номер телефона',
-  // },
 ]);
 
 const mainKeyboard = new Keyboard()
@@ -156,6 +166,9 @@ const mainKeyboard = new Keyboard()
   .text('Остаток средств для столовой')
   .resized()
   .row()
+  .text('График отпусков')
+  .resized()
+  .row()
   .text('Отправить сообщение руководству')
   .resized()
   .row();
@@ -163,9 +176,6 @@ const mainKeyboard = new Keyboard()
 bot.command('start', async (ctx) => {
   await ctx.reply(
     'Привет! Это бот ООО Мираж! для полноценной работы вы должны поделиться своим номером телефона, для этого нужно выполнить команду /getphone'
-    // {
-    //   reply_markup: mainKeyboard,
-    // }
   );
 });
 
@@ -223,6 +233,21 @@ bot.hears('Показать штрихкод', async (ctx) => {
       } else {
         await ctx.reply('Ошибка при генерации штрихкода');
       }
+    }
+  } else {
+    // await ctx.reply('Эта команда доступна только в личных чатах.');
+    await ctx.reply('В данный момент эта команда недоступна.');
+  }
+});
+
+bot.hears('График отпусков', async (ctx) => {
+  if (ctx.update.message) {
+    const tgId = ctx.update.message.from.id;
+    const userInfo = await getUserByTgId(tgId);
+    if (!userInfo) {
+      await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+    } else {
+      await ctx.reply('В данный момент эта команда недоступна.');
     }
   } else {
     // await ctx.reply('Эта команда доступна только в личных чатах.');
@@ -292,7 +317,30 @@ bot.hears('Узнать колличество отработанных часо
 // });
 
 bot.hears('Остаток средств для столовой', async (ctx) => {
-  await ctx.reply(`Остаток средства на вашем счете : Х. Ваш Id: ${ctx.from?.id}`);
+  if (ctx.update.message) {
+    const tgId = ctx.update.message.from.id;
+    const userInfo = await getUserByTgId(tgId);
+    console.log(userInfo);
+
+    if (!userInfo) {
+      await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+    } else {
+      const money = userInfo[0].money;
+
+      if (money) {
+        try {
+          await ctx.reply(`${money} р.`);
+          // console.log('Штрихкод отправлен успешно');
+        } catch (err) {
+          await ctx.reply('Ошибка при отправке остатка денежных стредств');
+        }
+      } else {
+        await ctx.reply('Ошибка при запросе денежных стредств');
+      }
+    }
+  } else {
+    await ctx.reply('В данный момент эта команда недоступна.');
+  }
 });
 
 bot.hears('Отправить сообщение руководству', async (ctx) => {
@@ -332,13 +380,14 @@ bot.on('callback_query:data', async (ctx) => {
       }
 
       const { dailyHours } = userData;
+      const dailyHoursThisMonth = filterDailyHoursByCurrentMonth(dailyHours);
 
       // let message = `Сумма отработанных часов за месяц: ${totalHours || 0}\n`;
       let sumHours = 0;
 
-      if (dailyHours && dailyHours.length > 0) {
+      if (dailyHoursThisMonth && dailyHoursThisMonth.length > 0) {
         // message += 'Отработанные часы по дням:\n';
-        dailyHours.forEach((dayData) => {
+        dailyHoursThisMonth.forEach((dayData) => {
           if (dayData.hours) {
             sumHours += Number(dayData.hours);
           }
@@ -384,11 +433,68 @@ bot.on('callback_query:data', async (ctx) => {
       let message = '';
 
       if (dailyHours && dailyHours.length > 0) {
-        message += 'Отработанные часы по дням:\n';
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+
+        let currentMonthWord;
+        switch (currentMonth) {
+          case 1:
+            currentMonthWord = 'январе';
+            break;
+          case 2:
+            currentMonthWord = 'феврале';
+            break;
+          case 3:
+            currentMonthWord = 'марте';
+            break;
+          case 4:
+            currentMonthWord = 'апреле';
+            break;
+          case 5:
+            currentMonthWord = 'мае';
+            break;
+          case 6:
+            currentMonthWord = 'июне';
+            break;
+          case 7:
+            currentMonthWord = 'июле';
+            break;
+          case 8:
+            currentMonthWord = 'августе';
+            break;
+          case 9:
+            currentMonthWord = 'сентябре';
+            break;
+          case 10:
+            currentMonthWord = 'октябре';
+            break;
+          case 11:
+            currentMonthWord = 'ноябре';
+            break;
+          case 12:
+            currentMonthWord = 'декабре';
+            break;
+        }
+
+        const dailyHoursThisMonth = filterDailyHoursByCurrentMonth(dailyHours);
+        if (dailyHoursThisMonth.length === 0) {
+          message += `Нет информации об отработанных часах в ${currentMonthWord}, либо ещё не произошло обовление данных\n`;
+        } else {
+          message += `Отработанные часы по дням в ${currentMonthWord}:\n`;
+        }
+
         dailyHours.forEach((dayData) => {
           if (dayData.day && dayData.hours) {
-            //Добавляем проверку чтобы избежать ошибки Cannot read properties of undefined (reading 'day')
-            message += `${dayData.day}: ${dayData.hours} часов\n`;
+            const date = new Date(dayData.day);
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            const year = date.getFullYear();
+
+            if (month === currentMonth && year === currentYear) {
+              message += `${day}.${month}.${year}: ${dayData.hours} часов\n`;
+              // message += `${dayData.day}: ${dayData.hours} часов\n`;
+            }
           }
         });
       } else {
@@ -403,14 +509,34 @@ bot.on('callback_query:data', async (ctx) => {
   if (ctx.callbackQuery.data === 'previous-month') {
     if (ctx.callbackQuery) {
       const tgId = ctx.callbackQuery.from.id;
-      const userInfo = await getUserByTgId(tgId);
-      if (!userInfo) {
+      const userData = await getWorkedHours(tgId);
+
+      if (!userData) {
         await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+        return;
       }
 
-      await ctx.reply('Просмотр отработанных часов в прошедшем месяце пока недоступен');
+      const { dailyHours } = userData;
+      const dailyHoursThisMonth = filterDailyHoursByCurrentMonth(dailyHours, 'previous');
+
+      // let message = `Сумма отработанных часов за месяц: ${totalHours || 0}\n`;
+      let sumHours = 0;
+
+      if (dailyHoursThisMonth && dailyHoursThisMonth.length > 0) {
+        // message += 'Отработанные часы по дням:\n';
+        dailyHoursThisMonth.forEach((dayData) => {
+          if (dayData.hours) {
+            sumHours += Number(dayData.hours);
+          }
+        });
+      } else {
+        await ctx.reply('Нет данных об отработанных часах за прошлый месяц');
+      }
+
+      if (dailyHoursThisMonth.length !== 0) {
+        await ctx.reply(`${sumHours}  часов отработано в прошлом месяце`);
+      }
     } else {
-      // await ctx.reply('Эта команда доступна только в личных чатах.');
       await ctx.reply('В данный момент эта команда недоступна.');
     }
   }
@@ -419,6 +545,7 @@ bot.on('callback_query:data', async (ctx) => {
     // await ctx.reply('Эта команда доступна только в личных чатах.');
     await ctx.reply('В данный момент отправка сообщений директору недоступна.');
   }
+
   if (ctx.callbackQuery.data === 'message-founder') {
     if (ctx.callbackQuery) {
       console.log(ctx.callbackQuery);
@@ -427,6 +554,7 @@ bot.on('callback_query:data', async (ctx) => {
       await ctx.reply('В данный момент отправка сообщений учредителю недоступна.');
     }
   }
+
   if (ctx.callbackQuery.data === 'message-accountant') {
     if (ctx.callbackQuery) {
       console.log(ctx.callbackQuery);
@@ -493,16 +621,35 @@ bot.catch((error) => {
 
 bot.start();
 
-const job = new CronJob(
-  '5 * * * * *',
-  // '0 3 * * *', // cronTime
-  async function () {
-    const filePath = './db/ВыгрузкаXML.XML';
-    // await downloadAndReplaceFile(filePath);
-    updateXMLData(filePath);
-    console.log('data is updated');
-  }, // onTick
-  null, // onComplete
-  true, // start
-  'Asia/Krasnoyarsk' // timeZone
-);
+if (process.env.VERSION === 'dev') {
+  const job = new CronJob(
+    '5 * * * * *',
+    // '0 3 * * *', // cronTime
+    async function () {
+      const filePath = './db/ВыгрузкаXML.XML';
+      // await downloadAndReplaceFile(filePath);
+      await updateXMLData(filePath);
+      // console.log('data is updated');
+    }, // onTick
+    null, // onComplete
+    true, // start
+    'Asia/Krasnoyarsk' // timeZone
+  );
+}
+
+if (process.env.VERSION === 'prod') {
+  const job = new CronJob(
+    '0 3 * * *',
+    async function () {
+      const filePathUnloading = './db/ВыгрузкаXML.XML';
+      const filePathVacationSchedule = './db/ГРАФИК ОТПУСКОВ.xlsx';
+      await downloadAndReplaceFile(filePathUnloading);
+      await updateXMLData(filePathUnloading);
+      await downloadAndReplaceFile(filePathVacationSchedule);
+      console.log('data is updated');
+    },
+    null,
+    true,
+    'Asia/Krasnoyarsk'
+  );
+}

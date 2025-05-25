@@ -1,20 +1,24 @@
 import { Pool, QueryResult } from 'pg';
 
-const pool = new Pool({
-  user: 'creo',
-  host: 'localhost',
-  database: 'mirage',
-  password: '',
-  port: 5432,
-});
+if (process.env.VERSION === 'dev') {
+  const pool = new Pool({
+    user: 'creo',
+    host: 'localhost',
+    database: 'mirage',
+    password: '',
+    port: 5432,
+  });
+}
 
-// const pool = new Pool({
-//   user: 'mirage_bot',
-//   host: 'localhost',
-//   database: 'mirage',
-//   password: 'password',
-//   port: 5432,
-// });
+if (process.env.VERSION === 'prod') {
+  const pool = new Pool({
+    user: 'mirage_bot',
+    host: 'localhost',
+    database: 'mirage',
+    password: 'password',
+    port: 5432,
+  });
+}
 
 export const query = async (text: string, params?: any[]): Promise<QueryResult<any>> => {
   const client = await pool.connect();
