@@ -1,23 +1,52 @@
 import { Pool, QueryResult } from 'pg';
 
-if (process.env.VERSION === 'dev') {
-  const pool = new Pool({
-    user: 'creo',
-    host: 'localhost',
-    database: 'mirage',
-    password: '',
-    port: 5432,
-  });
-}
+// if (process.env.VERSION === 'dev') {
+//   const pool = new Pool({
+//     user: 'creo',
+//     host: 'localhost',
+//     database: 'mirage',
+//     password: '',
+//     port: 5432,
+//   });
+// }
 
-if (process.env.VERSION === 'prod') {
-  const pool = new Pool({
-    user: 'mirage_bot',
-    host: 'localhost',
-    database: 'mirage',
-    password: 'password',
-    port: 5432,
-  });
+// if (process.env.VERSION === 'prod') {
+//   const pool = new Pool({
+//     user: 'mirage_bot',
+//     host: 'localhost',
+//     database: 'mirage',
+//     password: 'password',
+//     port: 5432,
+//   });
+// }
+
+const commonConfig = {
+  host: 'localhost',
+  database: 'mirage',
+  port: 5432,
+};
+
+let pool: Pool;
+
+switch (process.env.VERSION) {
+  case 'dev':
+    pool = new Pool({
+      user: 'creo',
+      password: '',
+      ...commonConfig,
+    });
+    break;
+  case 'prod':
+    pool = new Pool({
+      user: 'mirage_bot',
+      password: 'password',
+      ...commonConfig,
+    });
+    break;
+  default:
+    console.error('Ошибка: process.env.VERSION не определен или имеет неверное значение.');
+    pool = new Pool(commonConfig);
+    break;
 }
 
 export const query = async (text: string, params?: any[]): Promise<QueryResult<any>> => {

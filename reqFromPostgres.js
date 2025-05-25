@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -38,13 +49,42 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateUserTgId = exports.getUsers = exports.query = void 0;
 var pg_1 = require("pg");
-var pool = new pg_1.Pool({
-    user: 'creo',
+// if (process.env.VERSION === 'dev') {
+//   const pool = new Pool({
+//     user: 'creo',
+//     host: 'localhost',
+//     database: 'mirage',
+//     password: '',
+//     port: 5432,
+//   });
+// }
+// if (process.env.VERSION === 'prod') {
+//   const pool = new Pool({
+//     user: 'mirage_bot',
+//     host: 'localhost',
+//     database: 'mirage',
+//     password: 'password',
+//     port: 5432,
+//   });
+// }
+var commonConfig = {
     host: 'localhost',
     database: 'mirage',
-    password: '',
     port: 5432,
-});
+};
+var pool;
+switch (process.env.VERSION) {
+    case 'dev':
+        pool = new pg_1.Pool(__assign({ user: 'creo', password: '' }, commonConfig));
+        break;
+    case 'prod':
+        pool = new pg_1.Pool(__assign({ user: 'mirage_bot', password: 'password' }, commonConfig));
+        break;
+    default:
+        console.error('Ошибка: process.env.VERSION не определен или имеет неверное значение.');
+        pool = new pg_1.Pool(commonConfig);
+        break;
+}
 var query = function (text, params) { return __awaiter(void 0, void 0, void 0, function () {
     var client, result, error_1;
     return __generator(this, function (_a) {

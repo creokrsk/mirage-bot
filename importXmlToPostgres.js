@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -56,29 +67,47 @@ var parseXMLFile = function (filePath) {
     });
 };
 var updateUserOrInsert = function (data) { return __awaiter(void 0, void 0, void 0, function () {
-    var client, users, _a, _b, _c, _i, userKey, user, name_1, phoneNumber, barcode, money, existsResult, workedHoursData, onlyFirstDay, _d, _e, _f, _g, dateKey, firstDateKey, _h, month, year, day, hours, err_1;
+    var commonConfig, client, users, _a, _b, _c, _i, userKey, user, name_1, phoneNumber, barcode, money, existsResult, workedHoursData, onlyFirstDay, _d, _e, _f, _g, dateKey, firstDateKey, _h, month, year, day, hours, err_1;
     var _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x;
     return __generator(this, function (_y) {
         switch (_y.label) {
             case 0:
-                if (process.env.VERSION === 'dev') {
-                    client = new pg_1.Client({
-                        user: 'creo',
-                        host: 'localhost',
-                        database: 'mirage',
-                        password: '',
-                        port: 5432,
-                    });
+                commonConfig = {
+                    host: 'localhost',
+                    database: 'mirage',
+                    port: 5432,
+                };
+                switch (process.env.VERSION) {
+                    case 'dev':
+                        client = new pg_1.Client(__assign({ user: 'creo', password: '' }, commonConfig));
+                        break;
+                    case 'prod':
+                        client = new pg_1.Client(__assign({ user: 'mirage_bot', password: 'password' }, commonConfig));
+                        break;
+                    default:
+                        console.error('Ошибка: process.env.VERSION не определен или имеет неверное значение.');
+                        client = new pg_1.Client(commonConfig);
+                        break;
                 }
-                if (process.env.VERSION === 'prod') {
-                    client = new pg_1.Client({
-                        user: 'mirage_bot',
-                        host: 'localhost',
-                        database: 'mirage',
-                        password: 'password',
-                        port: 5432,
-                    });
-                }
+                // let client;
+                // if (process.env.VERSION === 'dev') {
+                //   client = new Client({
+                //     user: 'creo',
+                //     host: 'localhost',
+                //     database: 'mirage',
+                //     password: '',
+                //     port: 5432,
+                //   });
+                // }
+                // if (process.env.VERSION === 'prod') {
+                //   client = new Client({
+                //     user: 'mirage_bot',
+                //     host: 'localhost',
+                //     database: 'mirage',
+                //     password: 'password',
+                //     port: 5432,
+                //   });
+                // }
                 // CREATE TABLE users (
                 //   user_n VARCHAR(255) PRIMARY KEY,
                 //   name TEXT,
@@ -95,6 +124,25 @@ var updateUserOrInsert = function (data) { return __awaiter(void 0, void 0, void
                 // ADD CONSTRAINT unique_user_day UNIQUE (user_n, day);
                 return [4 /*yield*/, client.connect()];
             case 1:
+                // let client;
+                // if (process.env.VERSION === 'dev') {
+                //   client = new Client({
+                //     user: 'creo',
+                //     host: 'localhost',
+                //     database: 'mirage',
+                //     password: '',
+                //     port: 5432,
+                //   });
+                // }
+                // if (process.env.VERSION === 'prod') {
+                //   client = new Client({
+                //     user: 'mirage_bot',
+                //     host: 'localhost',
+                //     database: 'mirage',
+                //     password: 'password',
+                //     port: 5432,
+                //   });
+                // }
                 // CREATE TABLE users (
                 //   user_n VARCHAR(255) PRIMARY KEY,
                 //   name TEXT,

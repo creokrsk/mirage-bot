@@ -19,27 +19,55 @@ const parseXMLFile = (filePath: string): Promise<any> => {
 };
 
 const updateUserOrInsert = async (data: any) => {
-  let client;
+  const commonConfig = {
+    host: 'localhost',
+    database: 'mirage',
+    port: 5432,
+  };
 
-  if (process.env.VERSION === 'dev') {
-    client = new Client({
-      user: 'creo',
-      host: 'localhost',
-      database: 'mirage',
-      password: '',
-      port: 5432,
-    });
-  }
+  let client: Client; // Объявляем pool
 
-  if (process.env.VERSION === 'prod') {
-    client = new Client({
-      user: 'mirage_bot',
-      host: 'localhost',
-      database: 'mirage',
-      password: 'password',
-      port: 5432,
-    });
+  switch (process.env.VERSION) {
+    case 'dev':
+      client = new Client({
+        user: 'creo',
+        password: '',
+        ...commonConfig,
+      });
+      break;
+    case 'prod':
+      client = new Client({
+        user: 'mirage_bot',
+        password: 'password',
+        ...commonConfig,
+      });
+      break;
+    default:
+      console.error('Ошибка: process.env.VERSION не определен или имеет неверное значение.');
+      client = new Client(commonConfig);
+      break;
   }
+  // let client;
+
+  // if (process.env.VERSION === 'dev') {
+  //   client = new Client({
+  //     user: 'creo',
+  //     host: 'localhost',
+  //     database: 'mirage',
+  //     password: '',
+  //     port: 5432,
+  //   });
+  // }
+
+  // if (process.env.VERSION === 'prod') {
+  //   client = new Client({
+  //     user: 'mirage_bot',
+  //     host: 'localhost',
+  //     database: 'mirage',
+  //     password: 'password',
+  //     port: 5432,
+  //   });
+  // }
 
   // CREATE TABLE users (
   //   user_n VARCHAR(255) PRIMARY KEY,
