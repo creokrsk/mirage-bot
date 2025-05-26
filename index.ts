@@ -320,7 +320,7 @@ bot.hears('Остаток средств для столовой', async (ctx) =
   if (ctx.update.message) {
     const tgId = ctx.update.message.from.id;
     const userInfo = await getUserByTgId(tgId);
-    console.log(userInfo);
+    // console.log(userInfo);
 
     if (!userInfo) {
       await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
@@ -329,7 +329,7 @@ bot.hears('Остаток средств для столовой', async (ctx) =
 
       if (money) {
         try {
-          await ctx.reply(`${money} р.`);
+          await ctx.reply(`${money.trim()} р.`);
           // console.log('Штрихкод отправлен успешно');
         } catch (err) {
           await ctx.reply('Ошибка при отправке остатка денежных стредств');
@@ -396,7 +396,7 @@ bot.on('callback_query:data', async (ctx) => {
         await ctx.reply('Просмотр отработанных часов в этом месяце пока недоступен');
       }
 
-      await ctx.reply(`${sumHours}  часов отработано вэтом месяце`);
+      await ctx.reply(`${Math.round(sumHours * 100) / 100}  часов отработано вэтом месяце`);
     } else {
       // await ctx.reply('Эта команда доступна только в личных чатах.');
       await ctx.reply('В данный момент эта команда недоступна.');
@@ -534,7 +534,7 @@ bot.on('callback_query:data', async (ctx) => {
       }
 
       if (dailyHoursThisMonth.length !== 0) {
-        await ctx.reply(`${sumHours}  часов отработано в прошлом месяце`);
+        await ctx.reply(`${Math.round(sumHours * 100) / 100}  часов отработано в прошлом месяце`);
       }
     } else {
       await ctx.reply('В данный момент эта команда недоступна.');
@@ -626,7 +626,7 @@ if (process.env.VERSION === 'dev') {
     '5 * * * * *',
     // '0 3 * * *', // cronTime
     async function () {
-      const filePath = './db/ВыгрузкаXML.XML';
+      const filePath = './db/ВыгрузкаXML (6).XML';
       // await downloadAndReplaceFile(filePath);
       await updateXMLData(filePath);
       // console.log('data is updated');

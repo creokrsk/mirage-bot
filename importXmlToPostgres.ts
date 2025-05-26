@@ -79,7 +79,7 @@ const updateUserOrInsert = async (data: any) => {
   // CREATE TABLE worked_hours (
   //   id SERIAL PRIMARY KEY,
   //   user_n VARCHAR(255) REFERENCES users(user_n),
-  //   day INTEGER,
+  //   day DATE,
   //   hours NUMERIC
   // );
 
