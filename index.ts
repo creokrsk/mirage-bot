@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import * as bwipjs from 'bwip-js';
-// import bwipjs from 'bwip-js';
 import { CronJob } from 'cron';
 
 import { Bot, GrammyError, HttpError, InputFile, Keyboard, InlineKeyboard, Context } from 'grammy';
@@ -8,6 +7,7 @@ import { Message } from 'grammy/types';
 import { query, getUsers, updateUserTgId } from './reqFromPostgres';
 import { updateXMLData } from './importXmlToPostgres';
 import { downloadAndReplaceFile } from './ftpDownload';
+import { reqFromXLSX } from './reqFromXLSX';
 
 const getUserByPhone = async (phoneNumber: string) => {
   try {
@@ -244,10 +244,15 @@ bot.hears('График отпусков', async (ctx) => {
   if (ctx.update.message) {
     const tgId = ctx.update.message.from.id;
     const userInfo = await getUserByTgId(tgId);
+    // console.log(userInfo);
+
     if (!userInfo) {
       await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
     } else {
-      await ctx.reply('В данный момент эта команда недоступна.');
+      const answer = reqFromXLSX(userInfo[0].name.trim(), userInfo[0].tg_id);
+      await ctx.reply(
+        `В соответствии с графиком отпусков запланированны следующие отпуска: \r\n${answer}`
+      );
     }
   } else {
     // await ctx.reply('Эта команда доступна только в личных чатах.');
@@ -628,7 +633,8 @@ if (process.env.VERSION === 'dev') {
     async function () {
       const filePath = './db/ВыгрузкаXML (6).XML';
       // await downloadAndReplaceFile(filePath);
-      await updateXMLData(filePath);
+      // await updateXMLData(filePath);
+
       // console.log('data is updated');
     }, // onTick
     null, // onComplete
