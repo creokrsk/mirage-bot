@@ -45,18 +45,9 @@ const formatVacationDates = (days: number[], year: number) => {
 };
 
 export function reqFromXLSX(userName: string, tgId: string) {
-  // console.log(userName);
-  // console.log(tgId);
-
   const workSheetsFromFile = xlsx.parse('./db/ГРАФИК ОТПУСКОВ.xlsx');
 
-  // for (let i = 0; i < workSheetsFromFile[0].data.length; i++) {
-  //   if (workSheetsFromFile[0].data[i].findIndex((element) => element === userName) !== -1) {
-  //     console.log(workSheetsFromFile[0].data[i].findIndex((element) => element === userName));
-  //     console.log('111');
-  //   }
-  // }
-  let year = new Date().getFullYear();
+  const year = parseInt(workSheetsFromFile[0].data[0][0]) || new Date().getFullYear();
   let isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 
   let foundInd;
@@ -66,22 +57,13 @@ export function reqFromXLSX(userName: string, tgId: string) {
     if (row && row[0] && row[0].toString().trim() === userName) {
       foundInd = i;
       break;
-
-      // return i;
     }
   }
-  console.log(foundInd);
 
   if (foundInd) {
-    // console.log(workSheetsFromFile[0].data[0]);
-    // console.log(workSheetsFromFile[0].data[1]);
-    // console.log(workSheetsFromFile[0].data[foundInd]);
     const vacationDays = workSheetsFromFile[0].data[foundInd];
     const months = workSheetsFromFile[0].data[0];
     const days = workSheetsFromFile[0].data[1];
-    const vacationScheduleYear =
-      parseInt(workSheetsFromFile[0].data[0][0]) || new Date().getFullYear();
-
     const filledMonths = [...months];
 
     let currentMonth = '';
@@ -93,12 +75,7 @@ export function reqFromXLSX(userName: string, tgId: string) {
       }
     }
 
-    console.log(filledMonths);
-
     const vacationDates = [];
-    // let currentMonthIndex = 0;
-    // let currentYear = new Date().getFullYear();
-    // console.log(currentYear);
 
     for (let i = 0; i < vacationDays.length; i++) {
       if (vacationDays[i] && typeof vacationDays[i] === 'number') {
@@ -106,13 +83,9 @@ export function reqFromXLSX(userName: string, tgId: string) {
         const day = days[i];
         const isVacation = vacationDays[i];
 
-        const monthIndex = filledMonths.indexOf(monthName);
-
-        // const vacationDate = new Date(2025, monthIndex, day);
         const vacationDate = { day, monthName };
 
         if (isVacation) {
-          // vacationDates.push(vacationDate.toLocaleDateString());
           vacationDates.push(vacationDate);
         }
       }
@@ -134,7 +107,7 @@ export function reqFromXLSX(userName: string, tgId: string) {
       }
     }
 
-    const result = formatVacationDates(vacationDaysArray, vacationScheduleYear);
+    const result = formatVacationDates(vacationDaysArray, year);
 
     return result;
   }
