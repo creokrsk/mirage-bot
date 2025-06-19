@@ -47,7 +47,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateUserTgId = exports.getUsers = exports.query = void 0;
+exports.getMessages = exports.updateMessageToManagement = exports.updateOfferToManagement = exports.updateUserTgId = exports.getName = exports.getUsers = exports.query = void 0;
 var pg_1 = require("pg");
 // if (process.env.VERSION === 'dev') {
 //   const pool = new Pool({
@@ -123,6 +123,20 @@ var getUsers = function () { return __awaiter(void 0, void 0, void 0, function (
     });
 }); };
 exports.getUsers = getUsers;
+var getName = function (tgId) { return __awaiter(void 0, void 0, void 0, function () {
+    var name;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                console.log(tgId);
+                return [4 /*yield*/, (0, exports.query)("SELECT name FROM users WHERE tg_id=".concat(tgId))];
+            case 1:
+                name = _a.sent();
+                return [2 /*return*/, name];
+        }
+    });
+}); };
+exports.getName = getName;
 var updateUserTgId = function (phoneNumber, tgId) { return __awaiter(void 0, void 0, void 0, function () {
     var result, error_2;
     return __generator(this, function (_a) {
@@ -151,7 +165,103 @@ var updateUserTgId = function (phoneNumber, tgId) { return __awaiter(void 0, voi
     });
 }); };
 exports.updateUserTgId = updateUserTgId;
-// export const getUser = async (data) => {
-//   const users = await query('SELECT * FROM users WHERE name='data'');
-//   return users;
-// };
+var updateOfferToManagement = function (data) { return __awaiter(void 0, void 0, void 0, function () {
+    var formattedDate, error_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                formattedDate = data.date.toISOString().slice(0, 10);
+                return [4 /*yield*/, (0, exports.query)("INSERT INTO offers (name, tgId, subdivision, ideastype, idea, date, checked) VALUES ($1, $2, $3, $4, $5, $6, $7)", [
+                        data.name,
+                        data.tgId,
+                        data.subDivision,
+                        data.ideasType,
+                        data.idea,
+                        formattedDate,
+                        data.checked,
+                    ])];
+            case 1:
+                _a.sent();
+                console.log('Предложение успешно добавлено в базу данных');
+                return [3 /*break*/, 3];
+            case 2:
+                error_3 = _a.sent();
+                console.error('Ошибка при добавлении предложения в базу данных:', error_3);
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.updateOfferToManagement = updateOfferToManagement;
+var updateMessageToManagement = function (data) { return __awaiter(void 0, void 0, void 0, function () {
+    var formattedDate, error_4;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                formattedDate = data.date.toISOString().slice(0, 10);
+                return [4 /*yield*/, (0, exports.query)("INSERT INTO messages (name, tgId, destination, message, date, checked) VALUES ($1, $2, $3, $4, $5, $6)", [data.name, data.tgId, data.destination, data.message, formattedDate, data.checked])];
+            case 1:
+                _a.sent();
+                console.log('Предложение успешно добавлено в базу данных');
+                return [3 /*break*/, 3];
+            case 2:
+                error_4 = _a.sent();
+                console.error('Ошибка при добавлении предложения в базу данных:', error_4);
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.updateMessageToManagement = updateMessageToManagement;
+var getMessages = function (accesTag, tgId) { return __awaiter(void 0, void 0, void 0, function () {
+    var messages, messages, messages, messages, messages, messages;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                console.log(accesTag);
+                console.log(tgId);
+                if (!(accesTag === 'view-1')) return [3 /*break*/, 2];
+                return [4 /*yield*/, (0, exports.query)("SELECT name, subdivision, ideastype, idea, date, checked FROM offers")];
+            case 1:
+                messages = _a.sent();
+                return [2 /*return*/, messages];
+            case 2:
+                if (!(accesTag === 'view-2')) return [3 /*break*/, 4];
+                return [4 /*yield*/, (0, exports.query)("SELECT name, message, date, destination FROM messages WHERE destination=$1", ['message-dir'])];
+            case 3:
+                messages = _a.sent();
+                return [2 /*return*/, messages];
+            case 4:
+                if (!(accesTag === 'view-3')) return [3 /*break*/, 6];
+                return [4 /*yield*/, (0, exports.query)("SELECT name, message, date, destination FROM messages WHERE destination=$1", ['message-founder'])];
+            case 5:
+                messages = _a.sent();
+                return [2 /*return*/, messages];
+            case 6:
+                if (!(accesTag === 'view-4')) return [3 /*break*/, 8];
+                return [4 /*yield*/, (0, exports.query)("SELECT name, message, date, destination FROM messages WHERE destination=$1", ['message-accountant'])];
+            case 7:
+                messages = _a.sent();
+                return [2 /*return*/, messages];
+            case 8:
+                if (!(accesTag === 'view-5')) return [3 /*break*/, 10];
+                return [4 /*yield*/, (0, exports.query)("SELECT name, subdivision, ideastype, idea, date, checked FROM offers WHERE tgId=$1", [tgId])];
+            case 9:
+                messages = _a.sent();
+                return [2 /*return*/, messages];
+            case 10:
+                if (!(accesTag === 'view-6')) return [3 /*break*/, 12];
+                return [4 /*yield*/, (0, exports.query)("SELECT name, message, date, destination FROM messages WHERE tgId=$1", [tgId])];
+            case 11:
+                messages = _a.sent();
+                return [2 /*return*/, messages];
+            case 12: 
+            // const name = await query(`SELECT name FROM users WHERE tg_id=${tgId}`);
+            // return name;
+            return [2 /*return*/];
+        }
+    });
+}); };
+exports.getMessages = getMessages;
