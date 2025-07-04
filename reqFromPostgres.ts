@@ -100,9 +100,6 @@ export const updateOfferToManagement = async (data: {
   date: Date;
   checked: boolean;
 }) => {
-  // const users = await query(
-  //   `INSERT INTO messages name=${data.name}, subdivision=${data.subDivision}, ideastype=${data.ideasType}, idea=${data.idea}, date=${data.date}`
-  // );
   try {
     const formattedDate = data.date.toISOString().slice(0, 10);
 
@@ -182,13 +179,21 @@ export const getMessages = async (accesTag: string, tgId: number) => {
 
   if (accesTag === 'view-5') {
     const messages = await query(
+      `SELECT name, message, date, destination FROM messages WHERE destination=$1`,
+      ['message-development-dir']
+    );
+    return messages;
+  }
+
+  if (accesTag === 'view-6') {
+    const messages = await query(
       `SELECT name, subdivision, ideastype, idea, date, checked FROM offers WHERE tgId=$1`,
       [tgId]
     );
     return messages;
   }
 
-  if (accesTag === 'view-6') {
+  if (accesTag === 'view-7') {
     const messages = await query(
       `SELECT name, message, date, destination FROM messages WHERE tgId=$1`,
       [tgId]
@@ -199,4 +204,50 @@ export const getMessages = async (accesTag: string, tgId: number) => {
   // const name = await query(`SELECT name FROM users WHERE tg_id=${tgId}`);
   // return name;
   return;
+};
+
+export const getAllTgId = async () => {
+  const users = await query('SELECT name, tg_id FROM users');
+  return users;
+};
+
+export const getUserFromName = async (name: string) => {
+  console.log(name);
+
+  const users = await query(`SELECT * FROM users WHERE name=$1`, [name + '\r\n\t\t\t']);
+  return users;
+};
+
+export const fireUnfireUser = async (name: string, data: boolean) => {
+  try {
+    const result: QueryResult = await query('UPDATE users SET is_works = $1 WHERE name = $2', [
+      data,
+      name + '\r\n\t\t\t',
+    ]);
+
+    if (result.rowCount === 1) {
+      console.log(`столбец is_works обновлен для пользователя с именем: ${name}`);
+    } else {
+      console.log(`Пользователь с именем: ${name} не найден`);
+    }
+  } catch (error) {
+    console.error('Ошибка обновления сведений о трудоустройстве:', error);
+  }
+};
+
+export const blockUnblockUser = async (name: string, data: boolean) => {
+  try {
+    const result: QueryResult = await query('UPDATE users SET blocked = $1 WHERE name = $2', [
+      data,
+      name + '\r\n\t\t\t',
+    ]);
+
+    if (result.rowCount === 1) {
+      console.log(`столбец blocked обновлен для пользователя с именем: ${name}`);
+    } else {
+      console.log(`Пользователь с именем: ${name} не найден`);
+    }
+  } catch (error) {
+    console.error('Ошибка обновления сведений о блокировке пользователя:', error);
+  }
 };

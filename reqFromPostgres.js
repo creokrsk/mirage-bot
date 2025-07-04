@@ -47,7 +47,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMessages = exports.updateMessageToManagement = exports.updateOfferToManagement = exports.updateUserTgId = exports.getName = exports.getUsers = exports.query = void 0;
+exports.blockUnblockUser = exports.fireUnfireUser = exports.getUserFromName = exports.getAllTgId = exports.getMessages = exports.updateMessageToManagement = exports.updateOfferToManagement = exports.updateUserTgId = exports.getName = exports.getUsers = exports.query = void 0;
 var pg_1 = require("pg");
 // if (process.env.VERSION === 'dev') {
 //   const pool = new Pool({
@@ -216,7 +216,7 @@ var updateMessageToManagement = function (data) { return __awaiter(void 0, void 
 }); };
 exports.updateMessageToManagement = updateMessageToManagement;
 var getMessages = function (accesTag, tgId) { return __awaiter(void 0, void 0, void 0, function () {
-    var messages, messages, messages, messages, messages, messages;
+    var messages, messages, messages, messages, messages, messages, messages;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -247,17 +247,23 @@ var getMessages = function (accesTag, tgId) { return __awaiter(void 0, void 0, v
                 return [2 /*return*/, messages];
             case 8:
                 if (!(accesTag === 'view-5')) return [3 /*break*/, 10];
-                return [4 /*yield*/, (0, exports.query)("SELECT name, subdivision, ideastype, idea, date, checked FROM offers WHERE tgId=$1", [tgId])];
+                return [4 /*yield*/, (0, exports.query)("SELECT name, message, date, destination FROM messages WHERE destination=$1", ['message-development-dir'])];
             case 9:
                 messages = _a.sent();
                 return [2 /*return*/, messages];
             case 10:
                 if (!(accesTag === 'view-6')) return [3 /*break*/, 12];
-                return [4 /*yield*/, (0, exports.query)("SELECT name, message, date, destination FROM messages WHERE tgId=$1", [tgId])];
+                return [4 /*yield*/, (0, exports.query)("SELECT name, subdivision, ideastype, idea, date, checked FROM offers WHERE tgId=$1", [tgId])];
             case 11:
                 messages = _a.sent();
                 return [2 /*return*/, messages];
-            case 12: 
+            case 12:
+                if (!(accesTag === 'view-7')) return [3 /*break*/, 14];
+                return [4 /*yield*/, (0, exports.query)("SELECT name, message, date, destination FROM messages WHERE tgId=$1", [tgId])];
+            case 13:
+                messages = _a.sent();
+                return [2 /*return*/, messages];
+            case 14: 
             // const name = await query(`SELECT name FROM users WHERE tg_id=${tgId}`);
             // return name;
             return [2 /*return*/];
@@ -265,3 +271,85 @@ var getMessages = function (accesTag, tgId) { return __awaiter(void 0, void 0, v
     });
 }); };
 exports.getMessages = getMessages;
+var getAllTgId = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var users;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, (0, exports.query)('SELECT name, tg_id FROM users')];
+            case 1:
+                users = _a.sent();
+                return [2 /*return*/, users];
+        }
+    });
+}); };
+exports.getAllTgId = getAllTgId;
+var getUserFromName = function (name) { return __awaiter(void 0, void 0, void 0, function () {
+    var users;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                console.log(name);
+                return [4 /*yield*/, (0, exports.query)("SELECT * FROM users WHERE name=$1", [name + '\r\n\t\t\t'])];
+            case 1:
+                users = _a.sent();
+                return [2 /*return*/, users];
+        }
+    });
+}); };
+exports.getUserFromName = getUserFromName;
+var fireUnfireUser = function (name, data) { return __awaiter(void 0, void 0, void 0, function () {
+    var result, error_5;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, (0, exports.query)('UPDATE users SET is_works = $1 WHERE name = $2', [
+                        data,
+                        name + '\r\n\t\t\t',
+                    ])];
+            case 1:
+                result = _a.sent();
+                if (result.rowCount === 1) {
+                    console.log("\u0441\u0442\u043E\u043B\u0431\u0435\u0446 is_works \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D \u0434\u043B\u044F \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F \u0441 \u0438\u043C\u0435\u043D\u0435\u043C: ".concat(name));
+                }
+                else {
+                    console.log("\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u0441 \u0438\u043C\u0435\u043D\u0435\u043C: ".concat(name, " \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D"));
+                }
+                return [3 /*break*/, 3];
+            case 2:
+                error_5 = _a.sent();
+                console.error('Ошибка обновления сведений о трудоустройстве:', error_5);
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.fireUnfireUser = fireUnfireUser;
+var blockUnblockUser = function (name, data) { return __awaiter(void 0, void 0, void 0, function () {
+    var result, error_6;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, (0, exports.query)('UPDATE users SET blocked = $1 WHERE name = $2', [
+                        data,
+                        name + '\r\n\t\t\t',
+                    ])];
+            case 1:
+                result = _a.sent();
+                if (result.rowCount === 1) {
+                    console.log("\u0441\u0442\u043E\u043B\u0431\u0435\u0446 blocked \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D \u0434\u043B\u044F \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F \u0441 \u0438\u043C\u0435\u043D\u0435\u043C: ".concat(name));
+                }
+                else {
+                    console.log("\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u0441 \u0438\u043C\u0435\u043D\u0435\u043C: ".concat(name, " \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D"));
+                }
+                return [3 /*break*/, 3];
+            case 2:
+                error_6 = _a.sent();
+                console.error('Ошибка обновления сведений о блокировке пользователя:', error_6);
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.blockUnblockUser = blockUnblockUser;

@@ -4,6 +4,7 @@ import { CronJob } from 'cron';
 
 import {
   Bot,
+  Api,
   GrammyError,
   HttpError,
   InputFile,
@@ -28,10 +29,36 @@ import {
   updateMessageToManagement,
   updateOfferToManagement,
   getMessages,
+  getAllTgId,
+  getUserFromName,
+  blockUnblockUser,
+  fireUnfireUser,
 } from './reqFromPostgres';
 import { updateXMLData } from './importXmlToPostgres';
 import { downloadAndReplaceFile } from './ftpDownload';
 import { reqFromXLSX } from './reqFromXLSX';
+import {
+  getphoneKeyboard,
+  mainKeyboard,
+  timeKeyboard,
+  messageKeyboard,
+  messageKeyboardAdmin,
+  ideasTypeKeyboard,
+  subdivisionKeyboard,
+  readMessageKeyboard1,
+  viewKeyboard1,
+  viewKeyboardFounder,
+  viewKeyboardDir,
+  viewKeyboardDevelopmentDir,
+  viewKeyboardBuh,
+  viewKeyboard3,
+  viewKeyboard4,
+  viewKeyboard5,
+  alphabetKeyboard,
+  blockOrFireUserKeyboard,
+  blockUserKeyboard,
+  fireUserKeyboard,
+} from './keyboards';
 
 interface SessionData {
   name: string;
@@ -43,119 +70,6 @@ interface SessionData {
 function initial(): SessionData {
   return { name: '', ideaType: '', subdivision: '', idea: '' };
 }
-
-const mainKeyboard = new Keyboard()
-  .text('Показать штрихкод')
-  .resized()
-  .row()
-  .text('Узнать колличество отработанных часов')
-  .resized()
-  .row()
-  .text('Остаток средств для столовой')
-  .resized()
-  .row()
-  .text('График отпусков')
-  .resized()
-  .row()
-  .text('Отправить сообщение или предложение руководству')
-  .resized()
-  .row();
-
-const timeKeyboard = new InlineKeyboard()
-  .text('Отработано в этом месяце всего', 'this-month')
-  .row()
-  .text('Отработано в этом месяце по дням', 'this-month-days')
-  .row()
-  .text('Отработано в прошлом месяце', 'previous-month');
-
-const messageKeyboard = new InlineKeyboard()
-  .text('Предложение от сотрудника', 'ideas-from-employees')
-  .row()
-  .text('Сообщение для директора', 'message-dir')
-  .row()
-  .text('Сообщение для учредителя', 'message-founder')
-  .row()
-  .text('Сообщение для главного бухгалтера', 'message-accountant')
-  .row()
-  .text('Просмотр сообщений', 'view-message');
-
-const ideasTypeKeyboard = new InlineKeyboard()
-  .text('Развитие', 'idea-1')
-  .row()
-  .text('Административная', 'idea-2')
-  .row()
-  .text('Продажи', 'idea-3')
-  .row()
-  .text('Имидж', 'idea-4')
-  .row()
-  .text('Оптимизация', 'idea-5')
-  .row()
-  .text('Техническая', 'idea-6')
-  .row()
-  .text('Комфорт', 'idea-7')
-  .row()
-  .text('Маркетинг', 'idea-8')
-  .row()
-  .text('Лояльность', 'idea-9')
-  .row()
-  .text('Контроль', 'idea-10')
-  .row()
-  .text('Другое', 'idea-11');
-
-const subdivisionKeyboard = new InlineKeyboard()
-  .text('Управление', 'subdivision-1')
-  .row()
-  .text('Закуп', 'subdivision-2')
-  .row()
-  .text('Логистика', 'subdivision-3')
-  .row()
-  .text('Торговля', 'subdivision-4')
-  .row()
-  .text('Кадры', 'subdivision-5')
-  .row()
-  .text('АХЧ', 'subdivision-6')
-  .row()
-  .text('ИТ', 'subdivision-7')
-  .row()
-  .text('Маркетинг', 'subdivision-8')
-  .row()
-  .text('Интернет магазин', 'subdivision-9')
-  .row()
-  .text('Склад', 'subdivision-10')
-  .row()
-  .text('Другое', 'subdivision-11');
-
-const readMessageKeyboard1 = new InlineKeyboard()
-  .text('Просмотр предложений', 'read-view-message')
-  .row()
-  .text('Просмотр сообщений для директора', 'read-view-message-dir')
-  .row()
-  .text('Просмотр сообщений для учредителя', 'read-view-message-founder')
-  .row()
-  .text('Просмотр сообщений для главного бухгалтера', 'read-view-message-accountant');
-
-const viewKeyboard1 = new InlineKeyboard()
-  .text('Показать обращения', 'view-1')
-  .row()
-  .text('Сообщения для директора', 'view-2')
-  .row()
-  .text('Сообщения для учредителя', 'view-3')
-  .row()
-  .text('Сообщения для главного бухгалтера', 'view-4');
-
-const viewKeyboard2 = new InlineKeyboard()
-  .text('Показать обращения', 'view-1')
-  .row()
-  .text('Сообщения для главного бухгалтера', 'view-4');
-
-const viewKeyboard3 = new InlineKeyboard().text('Показать обращения', 'view-1').row();
-
-const viewKeyboard4 = new InlineKeyboard().text('Показать мои сообщения', 'view-0').row();
-
-const viewKeyboard5 = new InlineKeyboard()
-  .text('Показать мои идеи', 'view-5')
-  .row()
-  .text('Показать сообщения для руководства', 'view-6');
 
 async function suggestionFromFnEmployee(
   conversation: Conversation,
@@ -407,7 +321,47 @@ async function messageAccountant(
   console.log(data.name);
   console.log(data.destination);
 
-  await ctx.reply('Опишите подробно ваше сообщение для главного бухгалтера:');
+  await ctx.reply('Опишите подробно ваше сообщение для бухгалтера:');
+  const ideaMessage = await conversation.waitFor('message:text');
+
+  // obj.idea = ideaMessage.update.message.text;
+  const messageTxt = ideaMessage.update.message.text;
+
+  await ctx.reply(`Ваше сообщение:\n ${messageTxt}`);
+
+  await ctx.reply(`Ваше обращение принято!`);
+
+  const nowDate = new Date();
+  interface DataToReq {
+    name: string;
+    tgId: number;
+    destination: string;
+    message: string;
+    date: Date;
+    checked: boolean;
+  }
+
+  const dataToReq = {
+    name: data.name,
+    tgId: data.tgId,
+    destination: data.destination,
+    message: messageTxt,
+    date: nowDate,
+    checked: false,
+  };
+  await updateMessageToManagement(dataToReq);
+  return;
+}
+
+async function messageDevelopmentDir(
+  conversation: Conversation,
+  ctx: Context,
+  data: { name: string; destination: string; tgId: number }
+) {
+  console.log(data.name);
+  console.log(data.destination);
+
+  await ctx.reply('Опишите подробно ваше сообщение для директора по развитию:');
   const ideaMessage = await conversation.waitFor('message:text');
 
   // obj.idea = ideaMessage.update.message.text;
@@ -445,10 +399,10 @@ async function viewMessage(
   // data: Record<string, string>
   data: { access: number; tgId: number }
 ) {
-  console.log(data);
+  // console.log(data);
 
   switch (data.access) {
-    case 1:
+    case -1:
       await ctx.reply('Какие вопросы вы хотите посомтреть?', {
         reply_markup: viewKeyboard1,
       });
@@ -458,6 +412,7 @@ async function viewMessage(
         'view-2',
         'view-3',
         'view-4',
+        'view-5',
       ]);
 
       if (view.update.callback_query.data === 'view-1') {
@@ -467,16 +422,18 @@ async function viewMessage(
         console.log(messages?.rows);
         await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
         await ctx.reply(`Список обращений:`);
-        for (let i = 0; i < messages?.rowCount || 0; i++) {
-          await ctx.reply(
-            `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
-              i
-            ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
-              i
-            ].date.getFullYear()}\n Тип идеи: ${messages?.rows[i].ideastype} \n Подразделение: ${
-              messages?.rows[i].subdivision
-            } \n Идея: ${messages?.rows[i].idea} \n`
-          );
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Тип идеи: ${messages?.rows[i].ideastype} \n Подразделение: ${
+                messages?.rows[i].subdivision
+              } \n Идея: ${messages?.rows[i].idea} \n`
+            );
+          }
         }
         // name, subdivision, ideastype, idea, date
       }
@@ -485,106 +442,297 @@ async function viewMessage(
         console.log('2');
         const messages = await getMessages(view.update.callback_query.data, data.tgId);
         console.log(messages?.rows);
-        await ctx.reply(`Всего сообщений для директора зарегистрировано: ${messages?.rowCount}`);
+        await ctx.reply(
+          `Всего сообщений для исполнительного директора зарегистрировано: ${messages?.rowCount}`
+        );
         await ctx.reply(`Список обращений:`);
-        for (let i = 0; i < messages?.rowCount || 0; i++) {
-          await ctx.reply(
-            `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
-              i
-            ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
-              i
-            ].date.getFullYear()}\n Вопрос: ${messages?.rows[i].message} \n`
-          );
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Вопрос: ${messages?.rows[i].message} \n`
+            );
+          }
         }
       }
       if (view.update.callback_query.data === 'view-3') {
-        console.log(3);
-        const messages = await getMessages(view.update.callback_query.data, data.tgId);
-        console.log(messages?.rows);
-        await ctx.reply(`Всего сообщений для учредителя зарегистрировано: ${messages?.rowCount}`);
-        await ctx.reply(`Список обращений:`);
-        for (let i = 0; i < messages?.rowCount || 0; i++) {
-          await ctx.reply(
-            `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
-              i
-            ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
-              i
-            ].date.getFullYear()}\n Вопрос: ${messages?.rows[i].message} \n`
-          );
-        }
-      }
-      if (view.update.callback_query.data === 'view-4') {
-        console.log(4);
+        // console.log(3);
         const messages = await getMessages(view.update.callback_query.data, data.tgId);
         console.log(messages?.rows);
         await ctx.reply(
-          `Всего сообщений для главного бухгалтера зарегистрировано: ${messages?.rowCount}`
+          `Всего сообщений для генерального директора зарегистрировано: ${messages?.rowCount}`
         );
         await ctx.reply(`Список обращений:`);
-        for (let i = 0; i < messages?.rowCount || 0; i++) {
-          await ctx.reply(
-            `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
-              i
-            ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
-              i
-            ].date.getFullYear()}\n Вопрос: ${messages?.rows[i].message} \n`
-          );
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Вопрос: ${messages?.rows[i].message} \n`
+            );
+          }
+        }
+      }
+
+      if (view.update.callback_query.data === 'view-4') {
+        const messages = await getMessages(view.update.callback_query.data, data.tgId);
+        // console.log(messages?.rows);
+        await ctx.reply(`Всего сообщений для бухгалтера зарегистрировано: ${messages?.rowCount}`);
+        await ctx.reply(`Список обращений:`);
+
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Вопрос: ${messages?.rows[i].message} \n`
+            );
+          }
+        }
+      }
+
+      if (view.update.callback_query.data === 'view-5') {
+        const messages = await getMessages(view.update.callback_query.data, data.tgId);
+        // console.log(messages?.rows);
+        await ctx.reply(
+          `Всего сообщений для директора по развитию зарегистрировано: ${messages?.rowCount}`
+        );
+        await ctx.reply(`Список обращений:`);
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Вопрос: ${messages?.rows[i].message} \n`
+            );
+          }
         }
       }
       break;
-    case 2:
+    case 1:
       await ctx.reply('Какие вопросы вы хотите посомтреть?', {
-        reply_markup: viewKeyboard2,
+        reply_markup: viewKeyboardFounder,
       });
 
-      const view2 = await conversation.waitForCallbackQuery([
+      const viewFounder = await conversation.waitForCallbackQuery(['view-1', 'view-3']);
+
+      if (viewFounder.update.callback_query.data === 'view-1') {
+        const messages = await getMessages(viewFounder.update.callback_query.data, data.tgId);
+        // console.log(messages?.rows);
+        await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
+        await ctx.reply(`Список обращений:`);
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Тип идеи: ${messages?.rows[i].ideastype} \n Подразделение: ${
+                messages?.rows[i].subdivision
+              } \n Идея: ${messages?.rows[i].idea} \n`
+            );
+          }
+        }
+      }
+
+      if (viewFounder.update.callback_query.data === 'view-3') {
+        const messages = await getMessages(viewFounder.update.callback_query.data, data.tgId);
+        // console.log(messages?.rows);
+        await ctx.reply(
+          `Всего сообщений для генерального директора зарегистрировано: ${messages?.rowCount}`
+        );
+        await ctx.reply(`Список обращений:`);
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Вопрос: ${messages?.rows[i].message} \n`
+            );
+          }
+        }
+      }
+
+      break;
+
+    case 2:
+      await ctx.reply('Какие вопросы вы хотите посомтреть?', {
+        reply_markup: viewKeyboardDir,
+      });
+
+      const viewDir = await conversation.waitForCallbackQuery(['view-1', 'view-2']);
+
+      if (viewDir.update.callback_query.data === 'view-1') {
+        // console.log('1');
+
+        const messages = await getMessages(viewDir.update.callback_query.data, data.tgId);
+        // console.log(messages?.rows);
+        await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
+        await ctx.reply(`Список обращений:`);
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Тип идеи: ${messages?.rows[i].ideastype} \n Подразделение: ${
+                messages?.rows[i].subdivision
+              } \n Идея: ${messages?.rows[i].idea} \n`
+            );
+          }
+        }
+      }
+
+      if (viewDir.update.callback_query.data === 'view-2') {
+        const messages = await getMessages(viewDir.update.callback_query.data, data.tgId);
+        // console.log(messages?.rows);
+        await ctx.reply(
+          `Всего сообщений для исполнительного директора зарегистрировано: ${messages?.rowCount}`
+        );
+        await ctx.reply(`Список обращений:`);
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Вопрос: ${messages?.rows[i].message} \n`
+            );
+          }
+        }
+      }
+
+      break;
+
+    case 3:
+      await ctx.reply('Какие вопросы вы хотите посомтреть?', {
+        reply_markup: viewKeyboardBuh,
+      });
+
+      const viewBuh = await conversation.waitForCallbackQuery([
         'view-1',
         // 'view-2',
         // 'view-3',
         'view-4',
       ]);
 
-      if (view2.update.callback_query.data === 'view-1') {
+      if (viewBuh.update.callback_query.data === 'view-1') {
         // console.log('1');
 
-        const messages = await getMessages(view2.update.callback_query.data, data.tgId);
-        console.log(messages?.rows);
+        const messages = await getMessages(viewBuh.update.callback_query.data, data.tgId);
+        // console.log(messages?.rows);
         await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
         await ctx.reply(`Список обращений:`);
-        for (let i = 0; i < messages?.rowCount || 0; i++) {
-          await ctx.reply(
-            `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
-              i
-            ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
-              i
-            ].date.getFullYear()}\n Тип идеи: ${messages?.rows[i].ideastype} \n Подразделение: ${
-              messages?.rows[i].subdivision
-            } \n Идея: ${messages?.rows[i].idea} \n`
-          );
+
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Тип идеи: ${messages?.rows[i].ideastype} \n Подразделение: ${
+                messages?.rows[i].subdivision
+              } \n Идея: ${messages?.rows[i].idea} \n`
+            );
+          }
         }
       }
 
-      if (view2.update.callback_query.data === 'view-4') {
-        console.log(4);
-        const messages = await getMessages(view2.update.callback_query.data, data.tgId);
-        console.log(messages?.rows);
-        await ctx.reply(
-          `Всего сообщений для главного бухгалтера зарегистрировано: ${messages?.rowCount}`
-        );
+      if (viewBuh.update.callback_query.data === 'view-4') {
+        const messages = await getMessages(viewBuh.update.callback_query.data, data.tgId);
+        // console.log(messages?.rows);
+        await ctx.reply(`Всего сообщений для бухгалтера зарегистрировано: ${messages?.rowCount}`);
         await ctx.reply(`Список обращений:`);
-        for (let i = 0; i < messages?.rowCount || 0; i++) {
-          await ctx.reply(
-            `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
-              i
-            ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
-              i
-            ].date.getFullYear()}\n Вопрос: ${messages?.rows[i].message} \n`
-          );
+
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Вопрос: ${messages?.rows[i].message} \n`
+            );
+          }
         }
       }
 
       break;
-    case 3:
+
+    case 4:
+      await ctx.reply('Какие вопросы вы хотите посомтреть?', {
+        reply_markup: viewKeyboardDevelopmentDir,
+      });
+
+      const viewDevelopmentDir = await conversation.waitForCallbackQuery(['view-1', 'view-5']);
+
+      if (viewDevelopmentDir.update.callback_query.data === 'view-1') {
+        // console.log('1');
+
+        const messages = await getMessages(
+          viewDevelopmentDir.update.callback_query.data,
+          data.tgId
+        );
+        // console.log(messages?.rows);
+        await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
+        await ctx.reply(`Список обращений:`);
+
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Тип идеи: ${messages?.rows[i].ideastype} \n Подразделение: ${
+                messages?.rows[i].subdivision
+              } \n Идея: ${messages?.rows[i].idea} \n`
+            );
+          }
+        }
+      }
+
+      if (viewDevelopmentDir.update.callback_query.data === 'view-5') {
+        const messages = await getMessages(
+          viewDevelopmentDir.update.callback_query.data,
+          data.tgId
+        );
+        // console.log(messages?.rows);
+        await ctx.reply(
+          `Всего сообщений для директора по развитию зарегистрировано: ${messages?.rowCount}`
+        );
+        await ctx.reply(`Список обращений:`);
+
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Вопрос: ${messages?.rows[i].message} \n`
+            );
+          }
+        }
+      }
+
+      break;
+    case 5:
       await ctx.reply('Какие вопросы вы хотите посомтреть?', {
         reply_markup: viewKeyboard3,
       });
@@ -598,19 +746,22 @@ async function viewMessage(
 
       if (view3.update.callback_query.data === 'view-1') {
         const messages = await getMessages(view3.update.callback_query.data, data.tgId);
-        console.log(messages?.rows);
+        // console.log(messages?.rows);
         await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
         await ctx.reply(`Список обращений:`);
-        for (let i = 0; i < messages?.rowCount || 0; i++) {
-          await ctx.reply(
-            `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
-              i
-            ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
-              i
-            ].date.getFullYear()}\n Тип идеи: ${messages?.rows[i].ideastype} \n Подразделение: ${
-              messages?.rows[i].subdivision
-            } \n Идея: ${messages?.rows[i].idea} \n`
-          );
+
+        if (messages && messages.rows && messages.rowCount) {
+          for (let i = 0; i < messages?.rowCount || 0; i++) {
+            await ctx.reply(
+              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                i
+              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                i
+              ].date.getFullYear()}\n Тип идеи: ${messages?.rows[i].ideastype} \n Подразделение: ${
+                messages?.rows[i].subdivision
+              } \n Идея: ${messages?.rows[i].idea} \n`
+            );
+          }
         }
       }
       break;
@@ -632,50 +783,49 @@ async function viewMessage(
         await ctx.reply('Какие Обращения вы хотите посомтреть?', {
           reply_markup: viewKeyboard5,
         });
-        const view5 = await conversation.waitForCallbackQuery(['view-5', 'view-6']);
-
-        if (view5.update.callback_query.data === 'view-5') {
-          const messages = await getMessages(view5.update.callback_query.data, data.tgId);
-          console.log(messages?.rows);
-          await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
-          await ctx.reply(`Список обращений:`);
-          for (let i = 0; i < messages?.rowCount || 0; i++) {
-            await ctx.reply(
-              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
-                i
-              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
-                i
-              ].date.getFullYear()}\n Тип идеи: ${messages?.rows[i].ideastype} \n Подразделение: ${
-                messages?.rows[i].subdivision
-              } \n Идея: ${messages?.rows[i].idea} \n`
-            );
-          }
-        }
+        const view5 = await conversation.waitForCallbackQuery(['view-6', 'view-7']);
 
         if (view5.update.callback_query.data === 'view-6') {
           const messages = await getMessages(view5.update.callback_query.data, data.tgId);
-          console.log(messages?.rows);
-          await ctx.reply(
-            `Всего сообщений для руководства зарегистрировано: ${messages?.rowCount}`
-          );
+          // console.log(messages?.rows);
+          await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
           await ctx.reply(`Список обращений:`);
-          for (let i = 0; i < messages?.rowCount || 0; i++) {
-            // await ctx.reply(
-            //   `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
-            //     i
-            //   ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
-            //     i
-            //   ].date.getFullYear()}\n для кого: ${messages?.rows[i].destination} \n Вопрос: ${
-            //     messages?.rows[i].message
-            //   } \n`
-            // );
+
+          if (messages && messages.rows && messages.rowCount) {
+            for (let i = 0; i < messages?.rowCount || 0; i++) {
+              await ctx.reply(
+                `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                  i
+                ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                  i
+                ].date.getFullYear()}\n Тип идеи: ${
+                  messages?.rows[i].ideastype
+                } \n Подразделение: ${messages?.rows[i].subdivision} \n Идея: ${
+                  messages?.rows[i].idea
+                } \n`
+              );
+            }
+          }
+        }
+
+        if (view5.update.callback_query.data === 'view-7') {
+          const messages = await getMessages(view5.update.callback_query.data, data.tgId);
+          // console.log(messages?.rows);
+          if (messages && messages.rows && messages.rowCount) {
             await ctx.reply(
-              `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
-                i
-              ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
-                i
-              ].date.getFullYear()} \n Вопрос: ${messages?.rows[i].message} \n`
+              `Всего сообщений для руководства зарегистрировано: ${messages?.rowCount}`
             );
+
+            await ctx.reply(`Список обращений:`);
+            for (let i = 0; i < messages?.rowCount || 0; i++) {
+              await ctx.reply(
+                `Имя: ${messages?.rows[i].name} \n дата обращения: ${messages?.rows[
+                  i
+                ].date.getDate()}-${messages?.rows[i].date.getMonth()}-${messages?.rows[
+                  i
+                ].date.getFullYear()} \n Вопрос: ${messages?.rows[i].message} \n`
+              );
+            }
           }
         }
       }
@@ -685,6 +835,239 @@ async function viewMessage(
     default:
       break;
   }
+
+  return;
+}
+
+async function sendMessageToAllUsers(
+  conversation: Conversation,
+  ctx: Context
+  // data: { name: string; destination: string; tgId: number }
+) {
+  // console.log(data.name);
+  // console.log(data.destination);
+  // const tgId = 25711166;
+
+  await ctx.reply(`Напишите сообщение которое хотите отправить сотрудникам`);
+  const message = await conversation.waitFor('message:text');
+  const messageText = message.update.message.text;
+
+  const users = await getAllTgId();
+  // console.log(users.rowCount);
+
+  const api = bot.api;
+
+  if (users.rows && users.rowCount) {
+    try {
+      // for (const tgId of tgIds) {
+      for (let i = 0; i < users.rowCount; i++) {
+        try {
+          if (users.rows[i].tg_id) {
+            // await api.sendMessage(tgId, ` Уважаем(ый/ая) ${users.rows[i].name} ${messageText}`);
+            await api.sendMessage(
+              users.rows[i].tg_id,
+              ` Уважаем(ый/ая) ${users.rows[i].name} ${messageText}`
+            );
+          }
+          // await api.sendMessage(tgId, 'messageText сегодня выходной');
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            console.error(`Бот заблокирован пользователем ${users.rows[i].tg_id}.`, error.message);
+            continue;
+          }
+
+          console.error(
+            `Ошибка при отправке сообщения пользователю ${users.rows[i].tg_id}:`,
+            error
+          );
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  await ctx.reply(`Сообщение пользователям отправлено!`);
+
+  return;
+}
+
+function createNamesKeyboard(names: string[]) {
+  const keyboard = new InlineKeyboard();
+  let currentRow = [];
+
+  names.forEach((name) => {
+    currentRow.push(keyboard.text(name, name));
+
+    if (currentRow.length === 2) {
+      keyboard.row();
+      currentRow = [];
+    }
+  });
+
+  return keyboard;
+}
+
+async function usersList(
+  conversation: Conversation,
+  ctx: Context
+  // data: { name: string; destination: string; tgId: number }
+) {
+  // console.log(data.name);
+  // console.log(data.destination);
+  // const tgId = 25711166;
+
+  const allUsers = await getUsers();
+  // console.log(allUsers.rows);
+
+  if (allUsers && allUsers.rows && allUsers.rowCount) {
+    try {
+      let usersList = '';
+      for (let i = 0; i < allUsers.rowCount; i++) {
+        // usersList = usersList + `${users.rows[i].name.trim()} ${users.rows[i].tg_id} \r\n`;
+        usersList = usersList + `${allUsers.rows[i].name.trim()}\r\n`;
+        // ctx.reply(users.rows[i].name.trim());
+      }
+      ctx.reply(`Всего сотрудников в списке: ${allUsers.rowCount}`);
+      ctx.reply('На какую букву начинается фамилия?', {
+        reply_markup: alphabetKeyboard,
+      });
+
+      const alphabet = await conversation.waitForCallbackQuery([
+        'А-letter',
+        'Б-letter',
+        'В-letter',
+        'Г-letter',
+        'Д-letter',
+        'Е-letter',
+        'Ё-letter',
+        'Ж-letter',
+        'З-letter',
+        'И-letter',
+        'Й-letter',
+        'К-letter',
+        'Л-letter',
+        'М-letter',
+        'Н-letter',
+        'О-letter',
+        'П-letter',
+        'Р-letter',
+        'С-letter',
+        'Т-letter',
+        'У-letter',
+        'Ф-letter',
+        'Х-letter',
+        'Ц-letter',
+        'Ч-letter',
+        'Ш-letter',
+        'Щ-letter',
+        'Ы-letter',
+        'Э-letter',
+        'Ю-letter',
+        'Я-letter',
+      ]);
+
+      const letterList = allUsers.rows
+        .filter((user) =>
+          user.name.trim().startsWith(alphabet.update.callback_query.data.charAt(0))
+        )
+        .map((user) => user.name.trim());
+
+      if (letterList.length == 0) {
+        await ctx.reply('Нет работников на выбранную букву');
+        return;
+      }
+      const namesKeyboard = createNamesKeyboard(letterList);
+      await ctx.reply('Список работников', {
+        reply_markup: namesKeyboard,
+      });
+
+      const userListanswer = await conversation.waitForCallbackQuery(letterList);
+      // console.log(
+      //   'userListanswer.update.callback_query.data:',
+      //   userListanswer.update.callback_query.data
+      // );
+
+      const foundWorker = await getUserFromName(userListanswer.update.callback_query.data);
+      const isWorks = foundWorker.rows[0].is_works
+        ? 'сотрудник числится на работе'
+        : 'сотрудник уволен';
+      const isBlock = foundWorker.rows[0].blocked
+        ? 'сотруднику заблокирована возможность писать сообщения руководству'
+        : 'сотруднику разрешено писать сообщения руководству';
+
+      await ctx.reply(
+        `Вы выбрали сотруника: ${userListanswer.update.callback_query.data}, ${isWorks}, ${isBlock}`
+      );
+
+      await ctx.reply('Что вы хотите сделать с пользователем?', {
+        reply_markup: blockOrFireUserKeyboard,
+      });
+
+      const blockOrFire = await conversation.waitForCallbackQuery([
+        'block-unblock',
+        'fire-unfire',
+        'block-fire-cancel',
+      ]);
+
+      switch (blockOrFire.update.callback_query.data) {
+        case 'block-unblock':
+          await ctx.reply('Что вы хотите сделать с пользователем?', {
+            reply_markup: blockUserKeyboard,
+          });
+
+          const block = await conversation.waitForCallbackQuery(['block-false', 'block-true']);
+
+          if (block.update.callback_query.data === 'block-true') {
+            await blockUnblockUser(userListanswer.update.callback_query.data, false);
+            await ctx.reply(`Сотрудник ${userListanswer.update.callback_query.data} заблокирован`);
+          } else {
+            await blockUnblockUser(userListanswer.update.callback_query.data, true);
+            await ctx.reply(`Сотрудник ${userListanswer.update.callback_query.data} разблокирован`);
+          }
+
+          break;
+
+        case 'fire-unfire':
+          await ctx.reply('Что вы хотите сделать с пользователем?', {
+            reply_markup: fireUserKeyboard,
+          });
+
+          const fire = await conversation.waitForCallbackQuery(['fire-false', 'fire-true']);
+
+          if (fire.update.callback_query.data === 'fire-false') {
+            await fireUnfireUser(userListanswer.update.callback_query.data, true);
+            await ctx.reply(
+              `Сотрудник ${userListanswer.update.callback_query.data} отмечен как работающий`
+            );
+          } else {
+            await fireUnfireUser(userListanswer.update.callback_query.data, false);
+            await ctx.reply(
+              `Сотрудник ${userListanswer.update.callback_query.data} отмечен как уволенный`
+            );
+          }
+          break;
+
+        case 'block-fire-cancel':
+          await ctx.reply('Вы вышли из меню сотруников');
+          return;
+
+        default:
+          break;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // await ctx.reply(`Напишите сообщение которое хотите отправить сотрудникам`);
+  // const message = await conversation.waitFor('message:text');
+  // const messageText = message.update.message.text;
+
+  // const users = await getAllTgId();
+  // console.log(users.rowCount);
+
+  // await ctx.reply(`Сообщение пользователям отправлено!`);
 
   return;
 }
@@ -813,8 +1196,6 @@ function filterDailyHoursByCurrentMonth(
   });
 }
 
-// type MyContext = Context & SessionFlavor<SessionData>;
-// const bot = new Bot<MyContext>(process.env.BOT_API_KEY as string);
 const bot = new Bot<ConversationFlavor<Context>>(process.env.BOT_API_KEY as string);
 
 bot.use(session({ initial }));
@@ -838,7 +1219,7 @@ bot.command('start', async (ctx) => {
   );
 });
 
-const getphoneKeyboard = new Keyboard().requestContact('Отправить контакт').resized().oneTime();
+// const getphoneKeyboard = new Keyboard().requestContact('Отправить контакт').resized().oneTime();
 
 bot.command('getphone', async (ctx) => {
   await ctx.reply('Пожалуйста, отправьте свой контакт', {
@@ -858,8 +1239,17 @@ bot.use(messageFounderConversation);
 const messageAccountantConversation = createConversation(messageAccountant);
 bot.use(messageAccountantConversation);
 
+const messageDevelopmentDirConversation = createConversation(messageDevelopmentDir);
+bot.use(messageDevelopmentDirConversation);
+
 const view1MessageConversation = createConversation(viewMessage);
 bot.use(view1MessageConversation);
+
+const sendMessageToAllUsersConversation = createConversation(sendMessageToAllUsers);
+bot.use(sendMessageToAllUsersConversation);
+
+const usersListConversation = createConversation(usersList);
+bot.use(usersListConversation);
 
 bot.on('message:contact', async (ctx) => {
   const phoneNumber = ctx.message.contact.phone_number;
@@ -894,6 +1284,11 @@ bot.hears('Показать штрихкод', async (ctx) => {
     if (!userInfo) {
       await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
     } else {
+      if (userInfo[0].is_works === false) {
+        await ctx.reply('Бот не предоставляет информацию для уволенных сотрудников');
+        return;
+      }
+
       const barcodeBuffer = await generateBarcode(userInfo[0].barcode);
 
       if (barcodeBuffer) {
@@ -924,6 +1319,10 @@ bot.hears('График отпусков', async (ctx) => {
     if (!userInfo) {
       await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
     } else {
+      if (userInfo[0].is_works === false) {
+        await ctx.reply('Бот не предоставляет информацию для уволенных сотрудников');
+        return;
+      }
       const answer = reqFromXLSX(userInfo[0].name.trim(), userInfo[0].tg_id);
       await ctx.reply(
         `В соответствии с графиком отпусков запланированны следующие отпуска: \r\n${answer}`
@@ -936,9 +1335,23 @@ bot.hears('График отпусков', async (ctx) => {
 
 // bot.command('time', async (ctx) => {
 bot.hears('Узнать колличество отработанных часов', async (ctx) => {
-  ctx.reply('Выберите какую информкцию об отработаных часах вы хотите узнать', {
-    reply_markup: timeKeyboard,
-  });
+  if (ctx.update.message) {
+    const tgId = ctx.update.message.from.id;
+    const userInfo = await getUserByTgId(tgId);
+    // console.log(userInfo);
+
+    if (!userInfo) {
+      await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+    } else {
+      if (userInfo[0].is_works === false) {
+        await ctx.reply('Бот не предоставляет информацию для уволенных сотрудников');
+        return;
+      }
+      ctx.reply('Выберите какую информкцию об отработаных часах вы хотите узнать', {
+        reply_markup: timeKeyboard,
+      });
+    }
+  }
 });
 
 bot.hears('Остаток средств для столовой', async (ctx) => {
@@ -950,6 +1363,10 @@ bot.hears('Остаток средств для столовой', async (ctx) =
     if (!userInfo) {
       await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
     } else {
+      if (userInfo[0].is_works === false) {
+        await ctx.reply('Бот не предоставляет информацию для уволенных сотрудников');
+        return;
+      }
       const money = userInfo[0].money;
 
       if (money) {
@@ -969,9 +1386,44 @@ bot.hears('Остаток средств для столовой', async (ctx) =
 });
 
 bot.hears('Отправить сообщение или предложение руководству', async (ctx) => {
-  ctx.reply('Кому вы хотите отправить сообщение?', {
-    reply_markup: messageKeyboard,
-  });
+  const tgId = ctx.from?.id;
+
+  if (ctx.update.message) {
+    const tgId = ctx.update.message.from.id;
+    const userInfo = await getUserByTgId(tgId);
+    // console.log(userInfo);
+
+    if (!userInfo) {
+      await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+    } else {
+      if (userInfo[0].is_works === false) {
+        await ctx.reply('Бот не предоставляет информацию для уволенных сотрудников');
+        return;
+      }
+
+      if (userInfo[0].blocked === true) {
+        await ctx.reply('Вы не можете отправить сообщение так как заблокированы!');
+        return;
+      }
+
+      let keyboard;
+
+      if (
+        tgId === 25711166 ||
+        tgId === 1152527823 ||
+        tgId === 324201750 ||
+        tgId === 1152527823 ||
+        tgId === 59575433
+      ) {
+        keyboard = messageKeyboardAdmin;
+      } else {
+        keyboard = messageKeyboard;
+      }
+      ctx.reply('Кому вы хотите отправить сообщение?', {
+        reply_markup: keyboard,
+      });
+    }
+  }
 });
 
 bot.on('callback_query:data', async (ctx) => {
@@ -1179,7 +1631,7 @@ bot.on('callback_query:data', async (ctx) => {
       });
     } else {
       // await ctx.reply('Эта команда доступна только в личных чатах.');
-      await ctx.reply('В данный момент отправка сообщений директору недоступна.');
+      await ctx.reply('В данный момент отправка сообщений исполнительному директору недоступна.');
     }
   }
 
@@ -1204,7 +1656,7 @@ bot.on('callback_query:data', async (ctx) => {
       });
     } else {
       // await ctx.reply('Эта команда доступна только в личных чатах.');
-      await ctx.reply('В данный момент отправка сообщений учредителю недоступна.');
+      await ctx.reply('В данный момент отправка сообщений генеральному директору недоступна.');
     }
   }
 
@@ -1228,7 +1680,31 @@ bot.on('callback_query:data', async (ctx) => {
         destination: 'message-accountant',
       });
     } else {
-      await ctx.reply('В данный момент отправка сообщений главному бухгалтеру недоступна.');
+      await ctx.reply('В данный момент отправка сообщений бухгалтеру недоступна.');
+    }
+  }
+
+  if (ctx.callbackQuery.data === 'message-development-dir') {
+    await ctx.answerCallbackQuery();
+    if (ctx.callbackQuery) {
+      const tgId = ctx.callbackQuery.from.id;
+      const userName = await getName(tgId);
+      const name = userName.rows[0].name.trim();
+
+      if (!name) {
+        await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
+        return;
+      }
+
+      await ctx.reply(`Здравствуйте ${name}`);
+
+      const convReq = await ctx.conversation.enter('messageDevelopmentDir', {
+        name,
+        tgId,
+        destination: 'message-development-dir',
+      });
+    } else {
+      await ctx.reply('В данный момент отправка сообщений директору по развитию недоступна.');
     }
   }
 
@@ -1240,8 +1716,15 @@ bot.on('callback_query:data', async (ctx) => {
       const name = userName.rows[0].name.trim();
 
       switch (tgId) {
+        // уровни доступа видимости
+        //  -1  все сообщения
+        //  0  только свои сообщения
+        //  1  генеральный директор
+        //  2  исполнительный директор
+        //  3  бухгалтер (пока убрали)
+        //  4  директор по развитию
+        //  5  только предложения от сотрудников
         case 25711166:
-          console.log('12131213');
           const convReq = await ctx.conversation.enter('viewMessage', {
             access: 0,
             tgId,
@@ -1250,9 +1733,36 @@ bot.on('callback_query:data', async (ctx) => {
           });
           break;
 
-        case 25711164:
-          console.log(3333);
+        case 1152527823:
+          // Чивчян Михаил (генеральный директор)
+          const convReq1 = await ctx.conversation.enter('viewMessage', {
+            access: 1,
+            tgId,
+          });
+          break;
 
+        case 324201750:
+          // Тарасенко Николай (исполнительный директор)
+          const convReq2 = await ctx.conversation.enter('viewMessage', {
+            access: 2,
+            tgId,
+          });
+          break;
+
+        case 59575433:
+          // Елена Станкевич (директор по развитию)
+          const convReq4 = await ctx.conversation.enter('viewMessage', {
+            access: 4,
+            tgId,
+          });
+          break;
+
+        case 1152527823:
+          // Молеровцева Ольга
+          const convReq3 = await ctx.conversation.enter('viewMessage', {
+            access: 5,
+            tgId,
+          });
           break;
 
         default:
@@ -1262,40 +1772,86 @@ bot.on('callback_query:data', async (ctx) => {
             // name,
             // destination: 'message-accountant',
           });
-          console.log('00000');
 
           break;
       }
-      // if (tgId === 25711166) {
-      //   await ctx.reply(`Здравствуйте ${name}, какие сообщения вы хотите просмотреть:`, {
-      //     reply_markup: readMessageKeyboard1,
-      //   });
-
-      //   if (ctx.callbackQuery.data === 'read-view-message') {
-      //     // Обработчик для "Показать все"
-      //     console.log('1111');
-
-      //     await ctx.answerCallbackQuery();
-
-      //     // ... ваш код для получения и отображения всех сообщений
-      //     // const messages = await getAllMessages();
-      //     // ... ваш код для отображения messages пользователю
-      //   }
-      // }
-
-      // if (!name) {
-      //   await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
-      //   return;
-      // }
-
-      // await ctx.reply(`Здравствуйте ${name}`);
-
-      // const convReq = await ctx.conversation.enter('messageAccountant', {
-      //   name,
-      //   destination: 'message-accountant',
-      // });
     } else {
       await ctx.reply('В данный момент просмотр сообщений недоступен.');
+    }
+  }
+
+  if (ctx.callbackQuery.data === 'message-to-all') {
+    await ctx.answerCallbackQuery();
+    if (ctx.callbackQuery) {
+      const tgId = ctx.callbackQuery.from.id;
+
+      if (
+        tgId === 25711166 ||
+        tgId === 1152527823 ||
+        tgId === 324201750 ||
+        tgId === 1152527823 ||
+        tgId === 59575433
+      ) {
+        const userName = await getName(tgId);
+        const name = userName.rows[0].name.trim();
+
+        if (!name) {
+          await ctx.reply(
+            'Информации о вас отсутствует либо вы не предоставили свой номер телефона'
+          );
+          return;
+        }
+
+        // await ctx.reply(
+        //   `Здравствуйте ${name} напишите сообщение которое вы хотите отправить сотрудникам`
+        // );
+
+        await ctx.reply(`Здравствуйте ${name}`);
+
+        const convReq = await ctx.conversation.enter('sendMessageToAllUsers', {
+          // name,
+          // tgId,
+          // destination: 'message-development-dir',
+        });
+      }
+    } else {
+      await ctx.reply('В данный момент отправка сообщений всем сотрудникам недоступна.');
+    }
+  }
+
+  if (ctx.callbackQuery.data === 'view-employees') {
+    await ctx.answerCallbackQuery();
+    if (ctx.callbackQuery) {
+      const tgId = ctx.callbackQuery.from.id;
+
+      if (
+        tgId === 25711166 ||
+        tgId === 1152527823 ||
+        tgId === 324201750 ||
+        tgId === 1152527823 ||
+        tgId === 59575433
+      ) {
+        const userName = await getName(tgId);
+        const name = userName.rows[0].name.trim();
+
+        if (!name) {
+          await ctx.reply(
+            'Информации о вас отсутствует либо вы не предоставили свой номер телефона'
+          );
+          return;
+        }
+
+        await ctx.reply(`Здравствуйте ${name}`);
+
+        const convReq = await ctx.conversation.enter('usersList', {
+          // name,
+          // tgId,
+          // destination: 'message-development-dir',
+        });
+        console.log('1111');
+      }
+    } else {
+      await ctx.reply('В данный момент команда показать всех сотрудников недоступна.');
     }
   }
 });
