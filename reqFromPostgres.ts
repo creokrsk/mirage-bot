@@ -212,7 +212,7 @@ export const getAllTgId = async () => {
 };
 
 export const getUserFromName = async (name: string) => {
-  console.log(name);
+  // console.log(name);
 
   const users = await query(`SELECT * FROM users WHERE name=$1`, [name + '\r\n\t\t\t']);
   return users;

@@ -76,7 +76,6 @@ async function suggestionFromFnEmployee(
   ctx: Context,
   userName: { name: string; tgId: number }
 ) {
-  // const { name } = userName;
   const obj = {
     ideasType: '',
     subdivision: '',
@@ -284,7 +283,6 @@ async function messageFounder(
   await ctx.reply('Опишите подробно ваше сообщение для учредителя:');
   const ideaMessage = await conversation.waitFor('message:text');
 
-  // obj.idea = ideaMessage.update.message.text;
   const messageTxt = ideaMessage.update.message.text;
 
   await ctx.reply(`Ваше сообщение:\n ${messageTxt}`);
@@ -324,7 +322,6 @@ async function messageAccountant(
   await ctx.reply('Опишите подробно ваше сообщение для бухгалтера:');
   const ideaMessage = await conversation.waitFor('message:text');
 
-  // obj.idea = ideaMessage.update.message.text;
   const messageTxt = ideaMessage.update.message.text;
 
   await ctx.reply(`Ваше сообщение:\n ${messageTxt}`);
@@ -364,7 +361,6 @@ async function messageDevelopmentDir(
   await ctx.reply('Опишите подробно ваше сообщение для директора по развитию:');
   const ideaMessage = await conversation.waitFor('message:text');
 
-  // obj.idea = ideaMessage.update.message.text;
   const messageTxt = ideaMessage.update.message.text;
 
   await ctx.reply(`Ваше сообщение:\n ${messageTxt}`);
@@ -396,11 +392,8 @@ async function messageDevelopmentDir(
 async function viewMessage(
   conversation: Conversation,
   ctx: Context,
-  // data: Record<string, string>
   data: { access: number; tgId: number }
 ) {
-  // console.log(data);
-
   switch (data.access) {
     case -1:
       await ctx.reply('Какие вопросы вы хотите посомтреть?', {
@@ -416,10 +409,7 @@ async function viewMessage(
       ]);
 
       if (view.update.callback_query.data === 'view-1') {
-        // console.log('1');
-
         const messages = await getMessages(view.update.callback_query.data, data.tgId);
-        console.log(messages?.rows);
         await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
         await ctx.reply(`Список обращений:`);
         if (messages && messages.rows && messages.rowCount) {
@@ -435,13 +425,10 @@ async function viewMessage(
             );
           }
         }
-        // name, subdivision, ideastype, idea, date
       }
 
       if (view.update.callback_query.data === 'view-2') {
-        console.log('2');
         const messages = await getMessages(view.update.callback_query.data, data.tgId);
-        console.log(messages?.rows);
         await ctx.reply(
           `Всего сообщений для исполнительного директора зарегистрировано: ${messages?.rowCount}`
         );
@@ -459,9 +446,7 @@ async function viewMessage(
         }
       }
       if (view.update.callback_query.data === 'view-3') {
-        // console.log(3);
         const messages = await getMessages(view.update.callback_query.data, data.tgId);
-        console.log(messages?.rows);
         await ctx.reply(
           `Всего сообщений для генерального директора зарегистрировано: ${messages?.rowCount}`
         );
@@ -481,7 +466,6 @@ async function viewMessage(
 
       if (view.update.callback_query.data === 'view-4') {
         const messages = await getMessages(view.update.callback_query.data, data.tgId);
-        // console.log(messages?.rows);
         await ctx.reply(`Всего сообщений для бухгалтера зарегистрировано: ${messages?.rowCount}`);
         await ctx.reply(`Список обращений:`);
 
@@ -500,7 +484,6 @@ async function viewMessage(
 
       if (view.update.callback_query.data === 'view-5') {
         const messages = await getMessages(view.update.callback_query.data, data.tgId);
-        // console.log(messages?.rows);
         await ctx.reply(
           `Всего сообщений для директора по развитию зарегистрировано: ${messages?.rowCount}`
         );
@@ -527,7 +510,6 @@ async function viewMessage(
 
       if (viewFounder.update.callback_query.data === 'view-1') {
         const messages = await getMessages(viewFounder.update.callback_query.data, data.tgId);
-        // console.log(messages?.rows);
         await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
         await ctx.reply(`Список обращений:`);
         if (messages && messages.rows && messages.rowCount) {
@@ -547,7 +529,6 @@ async function viewMessage(
 
       if (viewFounder.update.callback_query.data === 'view-3') {
         const messages = await getMessages(viewFounder.update.callback_query.data, data.tgId);
-        // console.log(messages?.rows);
         await ctx.reply(
           `Всего сообщений для генерального директора зарегистрировано: ${messages?.rowCount}`
         );
@@ -575,10 +556,7 @@ async function viewMessage(
       const viewDir = await conversation.waitForCallbackQuery(['view-1', 'view-2']);
 
       if (viewDir.update.callback_query.data === 'view-1') {
-        // console.log('1');
-
         const messages = await getMessages(viewDir.update.callback_query.data, data.tgId);
-        // console.log(messages?.rows);
         await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
         await ctx.reply(`Список обращений:`);
         if (messages && messages.rows && messages.rowCount) {
@@ -598,7 +576,7 @@ async function viewMessage(
 
       if (viewDir.update.callback_query.data === 'view-2') {
         const messages = await getMessages(viewDir.update.callback_query.data, data.tgId);
-        // console.log(messages?.rows);
+
         await ctx.reply(
           `Всего сообщений для исполнительного директора зарегистрировано: ${messages?.rowCount}`
         );
@@ -623,18 +601,10 @@ async function viewMessage(
         reply_markup: viewKeyboardBuh,
       });
 
-      const viewBuh = await conversation.waitForCallbackQuery([
-        'view-1',
-        // 'view-2',
-        // 'view-3',
-        'view-4',
-      ]);
+      const viewBuh = await conversation.waitForCallbackQuery(['view-1', 'view-4']);
 
       if (viewBuh.update.callback_query.data === 'view-1') {
-        // console.log('1');
-
         const messages = await getMessages(viewBuh.update.callback_query.data, data.tgId);
-        // console.log(messages?.rows);
         await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
         await ctx.reply(`Список обращений:`);
 
@@ -655,7 +625,6 @@ async function viewMessage(
 
       if (viewBuh.update.callback_query.data === 'view-4') {
         const messages = await getMessages(viewBuh.update.callback_query.data, data.tgId);
-        // console.log(messages?.rows);
         await ctx.reply(`Всего сообщений для бухгалтера зарегистрировано: ${messages?.rowCount}`);
         await ctx.reply(`Список обращений:`);
 
@@ -682,13 +651,11 @@ async function viewMessage(
       const viewDevelopmentDir = await conversation.waitForCallbackQuery(['view-1', 'view-5']);
 
       if (viewDevelopmentDir.update.callback_query.data === 'view-1') {
-        // console.log('1');
-
         const messages = await getMessages(
           viewDevelopmentDir.update.callback_query.data,
           data.tgId
         );
-        // console.log(messages?.rows);
+
         await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
         await ctx.reply(`Список обращений:`);
 
@@ -712,7 +679,6 @@ async function viewMessage(
           viewDevelopmentDir.update.callback_query.data,
           data.tgId
         );
-        // console.log(messages?.rows);
         await ctx.reply(
           `Всего сообщений для директора по развитию зарегистрировано: ${messages?.rowCount}`
         );
@@ -737,16 +703,10 @@ async function viewMessage(
         reply_markup: viewKeyboard3,
       });
 
-      const view3 = await conversation.waitForCallbackQuery([
-        'view-1',
-        // 'view-2',
-        // 'view-3',
-        // 'view-4',
-      ]);
+      const view3 = await conversation.waitForCallbackQuery(['view-1']);
 
       if (view3.update.callback_query.data === 'view-1') {
         const messages = await getMessages(view3.update.callback_query.data, data.tgId);
-        // console.log(messages?.rows);
         await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
         await ctx.reply(`Список обращений:`);
 
@@ -787,7 +747,6 @@ async function viewMessage(
 
         if (view5.update.callback_query.data === 'view-6') {
           const messages = await getMessages(view5.update.callback_query.data, data.tgId);
-          // console.log(messages?.rows);
           await ctx.reply(`Всего обращений зарегистрировано: ${messages?.rowCount}`);
           await ctx.reply(`Список обращений:`);
 
@@ -810,7 +769,6 @@ async function viewMessage(
 
         if (view5.update.callback_query.data === 'view-7') {
           const messages = await getMessages(view5.update.callback_query.data, data.tgId);
-          // console.log(messages?.rows);
           if (messages && messages.rows && messages.rowCount) {
             await ctx.reply(
               `Всего сообщений для руководства зарегистрировано: ${messages?.rowCount}`
@@ -839,37 +797,25 @@ async function viewMessage(
   return;
 }
 
-async function sendMessageToAllUsers(
-  conversation: Conversation,
-  ctx: Context
-  // data: { name: string; destination: string; tgId: number }
-) {
-  // console.log(data.name);
-  // console.log(data.destination);
-  // const tgId = 25711166;
-
+async function sendMessageToAllUsers(conversation: Conversation, ctx: Context) {
   await ctx.reply(`Напишите сообщение которое хотите отправить сотрудникам`);
   const message = await conversation.waitFor('message:text');
   const messageText = message.update.message.text;
 
   const users = await getAllTgId();
-  // console.log(users.rowCount);
 
   const api = bot.api;
 
   if (users.rows && users.rowCount) {
     try {
-      // for (const tgId of tgIds) {
       for (let i = 0; i < users.rowCount; i++) {
         try {
           if (users.rows[i].tg_id) {
-            // await api.sendMessage(tgId, ` Уважаем(ый/ая) ${users.rows[i].name} ${messageText}`);
             await api.sendMessage(
               users.rows[i].tg_id,
               ` Уважаем(ый/ая) ${users.rows[i].name} ${messageText}`
             );
           }
-          // await api.sendMessage(tgId, 'messageText сегодня выходной');
         } catch (error: unknown) {
           if (error instanceof Error) {
             console.error(`Бот заблокирован пользователем ${users.rows[i].tg_id}.`, error.message);
@@ -908,25 +854,14 @@ function createNamesKeyboard(names: string[]) {
   return keyboard;
 }
 
-async function usersList(
-  conversation: Conversation,
-  ctx: Context
-  // data: { name: string; destination: string; tgId: number }
-) {
-  // console.log(data.name);
-  // console.log(data.destination);
-  // const tgId = 25711166;
-
+async function usersList(conversation: Conversation, ctx: Context) {
   const allUsers = await getUsers();
-  // console.log(allUsers.rows);
 
   if (allUsers && allUsers.rows && allUsers.rowCount) {
     try {
       let usersList = '';
       for (let i = 0; i < allUsers.rowCount; i++) {
-        // usersList = usersList + `${users.rows[i].name.trim()} ${users.rows[i].tg_id} \r\n`;
         usersList = usersList + `${allUsers.rows[i].name.trim()}\r\n`;
-        // ctx.reply(users.rows[i].name.trim());
       }
       ctx.reply(`Всего сотрудников в списке: ${allUsers.rowCount}`);
       ctx.reply('На какую букву начинается фамилия?', {
@@ -983,12 +918,28 @@ async function usersList(
       });
 
       const userListanswer = await conversation.waitForCallbackQuery(letterList);
-      // console.log(
-      //   'userListanswer.update.callback_query.data:',
-      //   userListanswer.update.callback_query.data
-      // );
 
       const foundWorker = await getUserFromName(userListanswer.update.callback_query.data);
+
+      if (
+        foundWorker.rows[0].user_n === 'ЧивчянМихаил' ||
+        foundWorker.rows[0].user_n === 'ТарасенкоНиколай' ||
+        foundWorker.rows[0].user_n === 'МолеровцеваОльга' ||
+        foundWorker.rows[0].user_n === 'СташкевичЕлена' ||
+        foundWorker.rows[0].tg_id === 1152527823 ||
+        foundWorker.rows[0].tg_id === 324201750 ||
+        foundWorker.rows[0].tg_id === 1152527823 ||
+        foundWorker.rows[0].tg_id === 59575433
+      ) {
+        await ctx.reply(
+          `Выбранный вами сотрудник: *${foundWorker.rows[0].name
+            .trim()
+            .toUpperCase()}* принадлежит к руководящему персоналу, его нельзя уволить или заблокировать`,
+          { parse_mode: 'MarkdownV2' }
+        );
+        return;
+      }
+
       const isWorks = foundWorker.rows[0].is_works
         ? 'сотрудник числится на работе'
         : 'сотрудник уволен';
@@ -1060,22 +1011,12 @@ async function usersList(
     }
   }
 
-  // await ctx.reply(`Напишите сообщение которое хотите отправить сотрудникам`);
-  // const message = await conversation.waitFor('message:text');
-  // const messageText = message.update.message.text;
-
-  // const users = await getAllTgId();
-  // console.log(users.rowCount);
-
-  // await ctx.reply(`Сообщение пользователям отправлено!`);
-
   return;
 }
 
 const getUserByPhone = async (phoneNumber: string) => {
   try {
     const users = await query('SELECT * FROM users WHERE phone_number = $1', [phoneNumber]);
-    // console.log(users);
 
     if (users.rows.length > 0) {
       console.log('Найденные пользователи:', users.rows);
@@ -1090,7 +1031,6 @@ const getUserByPhone = async (phoneNumber: string) => {
 const getUserByTgId = async (tgId: number) => {
   try {
     const users = await query('SELECT * FROM users WHERE tg_id = $1', [tgId]);
-    // console.log(users);
 
     if (users.rows.length > 0) {
       return users.rows;
@@ -1219,8 +1159,6 @@ bot.command('start', async (ctx) => {
   );
 });
 
-// const getphoneKeyboard = new Keyboard().requestContact('Отправить контакт').resized().oneTime();
-
 bot.command('getphone', async (ctx) => {
   await ctx.reply('Пожалуйста, отправьте свой контакт', {
     reply_markup: getphoneKeyboard,
@@ -1264,7 +1202,6 @@ bot.on('message:contact', async (ctx) => {
   await ctx.reply(`Спасибо! Ваш номер телефона: ${phoneNumber}`, {
     reply_markup: { remove_keyboard: true },
   });
-  // await ctx.reply(`Ваш номер телефона: ${phoneNumber}`);
 });
 
 bot.command('menu', async (ctx) => {
@@ -1293,12 +1230,10 @@ bot.hears('Показать штрихкод', async (ctx) => {
 
       if (barcodeBuffer) {
         try {
-          // console.log(barcodeBuffer);
           const inputFile = new InputFile(barcodeBuffer, 'barcode.png');
           await ctx.replyWithPhoto(inputFile);
           console.log('Штрихкод отправлен успешно');
         } catch (err) {
-          // console.error('Ошибка при отправке штрихкода:', err);
           await ctx.reply('Ошибка при отправке штрихкода');
         }
       } else {
@@ -1314,7 +1249,6 @@ bot.hears('График отпусков', async (ctx) => {
   if (ctx.update.message) {
     const tgId = ctx.update.message.from.id;
     const userInfo = await getUserByTgId(tgId);
-    // console.log(userInfo);
 
     if (!userInfo) {
       await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
@@ -1333,12 +1267,10 @@ bot.hears('График отпусков', async (ctx) => {
   }
 });
 
-// bot.command('time', async (ctx) => {
 bot.hears('Узнать колличество отработанных часов', async (ctx) => {
   if (ctx.update.message) {
     const tgId = ctx.update.message.from.id;
     const userInfo = await getUserByTgId(tgId);
-    // console.log(userInfo);
 
     if (!userInfo) {
       await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
@@ -1358,7 +1290,6 @@ bot.hears('Остаток средств для столовой', async (ctx) =
   if (ctx.update.message) {
     const tgId = ctx.update.message.from.id;
     const userInfo = await getUserByTgId(tgId);
-    // console.log(userInfo);
 
     if (!userInfo) {
       await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
@@ -1372,7 +1303,6 @@ bot.hears('Остаток средств для столовой', async (ctx) =
       if (money) {
         try {
           await ctx.reply(`${money.trim()} р.`);
-          // console.log('Штрихкод отправлен успешно');
         } catch (err) {
           await ctx.reply('Ошибка при отправке остатка денежных стредств');
         }
@@ -1391,7 +1321,6 @@ bot.hears('Отправить сообщение или предложение �
   if (ctx.update.message) {
     const tgId = ctx.update.message.from.id;
     const userInfo = await getUserByTgId(tgId);
-    // console.log(userInfo);
 
     if (!userInfo) {
       await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
@@ -1428,13 +1357,11 @@ bot.hears('Отправить сообщение или предложение �
 
 bot.on('callback_query:data', async (ctx) => {
   await ctx.answerCallbackQuery();
-  // console.log(ctx.callbackQuery);
 
   await ctx.answerCallbackQuery();
   if (ctx.callbackQuery.data === 'this-month') {
     if (ctx.callbackQuery) {
       const tgId = ctx.callbackQuery.from.id;
-      // const userData = await getUserByTgId(tgId);
       const userData = await getWorkedHours(tgId);
 
       if (!userData) {
@@ -1474,8 +1401,6 @@ bot.on('callback_query:data', async (ctx) => {
       }
 
       const { dailyHours } = userData;
-
-      // let message = `Сумма отработанных часов за месяц: ${totalHours || 0}\n`;
       let message = '';
 
       if (dailyHours && dailyHours.length > 0) {
@@ -1539,7 +1464,6 @@ bot.on('callback_query:data', async (ctx) => {
 
             if (month === currentMonth && year === currentYear) {
               message += `${day}.${month}.${year}: ${dayData.hours} часов\n`;
-              // message += `${dayData.day}: ${dayData.hours} часов\n`;
             }
           }
         });
@@ -1593,13 +1517,11 @@ bot.on('callback_query:data', async (ctx) => {
       const userName = await getName(tgId);
       const name = userName.rows[0].name.trim();
       console.log(name);
-      // console.log(ctx.callbackQuery.message?.reply_markup?.inline_keyboard);
 
       if (!name) {
         await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
         return;
       }
-      // ctx.session.name = name;
 
       await ctx.reply(`Здравствуйте ${name}`);
 
@@ -1613,14 +1535,11 @@ bot.on('callback_query:data', async (ctx) => {
       const tgId = ctx.callbackQuery.from.id;
       const userName = await getName(tgId);
       const name = userName.rows[0].name.trim();
-      // console.log(name);
-      // console.log(ctx.callbackQuery.message?.reply_markup?.inline_keyboard);
 
       if (!name) {
         await ctx.reply('Информации о вас отсутствует либо вы не предоставили свой номер телефона');
         return;
       }
-      // ctx.session.name = name;
 
       await ctx.reply(`Здравствуйте ${name}`);
 
@@ -1630,7 +1549,6 @@ bot.on('callback_query:data', async (ctx) => {
         destination: 'message-dir',
       });
     } else {
-      // await ctx.reply('Эта команда доступна только в личных чатах.');
       await ctx.reply('В данный момент отправка сообщений исполнительному директору недоступна.');
     }
   }
@@ -1655,7 +1573,6 @@ bot.on('callback_query:data', async (ctx) => {
         destination: 'message-founder',
       });
     } else {
-      // await ctx.reply('Эта команда доступна только в личных чатах.');
       await ctx.reply('В данный момент отправка сообщений генеральному директору недоступна.');
     }
   }
@@ -1802,17 +1719,9 @@ bot.on('callback_query:data', async (ctx) => {
           return;
         }
 
-        // await ctx.reply(
-        //   `Здравствуйте ${name} напишите сообщение которое вы хотите отправить сотрудникам`
-        // );
-
         await ctx.reply(`Здравствуйте ${name}`);
 
-        const convReq = await ctx.conversation.enter('sendMessageToAllUsers', {
-          // name,
-          // tgId,
-          // destination: 'message-development-dir',
-        });
+        const convReq = await ctx.conversation.enter('sendMessageToAllUsers', {});
       }
     } else {
       await ctx.reply('В данный момент отправка сообщений всем сотрудникам недоступна.');
@@ -1843,11 +1752,7 @@ bot.on('callback_query:data', async (ctx) => {
 
         await ctx.reply(`Здравствуйте ${name}`);
 
-        const convReq = await ctx.conversation.enter('usersList', {
-          // name,
-          // tgId,
-          // destination: 'message-development-dir',
-        });
+        const convReq = await ctx.conversation.enter('usersList', {});
         console.log('1111');
       }
     } else {
