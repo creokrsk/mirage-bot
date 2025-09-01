@@ -926,7 +926,7 @@ async function usersList(conversation: Conversation, ctx: Context) {
         foundWorker.rows[0].user_n === 'ТарасенкоНиколай' ||
         foundWorker.rows[0].user_n === 'МолеровцеваОльга' ||
         foundWorker.rows[0].user_n === 'СташкевичЕлена' ||
-        foundWorker.rows[0].tg_id === 1152527823 ||
+        foundWorker.rows[0].tg_id === 1993718775 ||
         foundWorker.rows[0].tg_id === 324201750 ||
         foundWorker.rows[0].tg_id === 1152527823 ||
         foundWorker.rows[0].tg_id === 59575433
@@ -1339,7 +1339,7 @@ bot.hears('Отправить сообщение или предложение �
 
       if (
         tgId === 25711166 ||
-        tgId === 1152527823 ||
+        tgId === 1993718775 ||
         tgId === 324201750 ||
         tgId === 1152527823 ||
         tgId === 59575433
@@ -1650,7 +1650,7 @@ bot.on('callback_query:data', async (ctx) => {
           });
           break;
 
-        case 1152527823:
+        case 1993718775:
           // Чивчян Михаил (генеральный директор)
           const convReq1 = await ctx.conversation.enter('viewMessage', {
             access: 1,
@@ -1704,7 +1704,7 @@ bot.on('callback_query:data', async (ctx) => {
 
       if (
         tgId === 25711166 ||
-        tgId === 1152527823 ||
+        tgId === 1993718775 ||
         tgId === 324201750 ||
         tgId === 1152527823 ||
         tgId === 59575433
@@ -1735,7 +1735,7 @@ bot.on('callback_query:data', async (ctx) => {
 
       if (
         tgId === 25711166 ||
-        tgId === 1152527823 ||
+        tgId === 1993718775 ||
         tgId === 324201750 ||
         tgId === 1152527823 ||
         tgId === 59575433
